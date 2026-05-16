@@ -1,0 +1,27 @@
+{
+  "name": "Bun SQL",
+  "short_name": "Bun SQL",
+  "description": "Multi-database SQL workbench for PostgreSQL, MySQL, MongoDB and ClickHouse",
+  "start_url": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#0d1117",
+  "theme_color": "#007acc",
+  "orientation": "any",
+  "categories": ["developer", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Query Tab",
+      "short_name": "New Tab",
+      "url": "/?action=new-tab"
+    }
+  ]
+}
