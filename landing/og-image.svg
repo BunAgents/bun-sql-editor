@@ -7,9 +7,10 @@
     <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
       <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#2d2d30" stroke-width="1"/>
     </pattern>
-    <linearGradient id="gBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0e3a5c"/><stop offset="100%" stop-color="#061e30"/></linearGradient>
-    <linearGradient id="gCap" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#60d8ff"/><stop offset="100%" stop-color="#0099ee"/></linearGradient>
-    <linearGradient id="gBolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff176"/><stop offset="100%" stop-color="#ffa000"/></linearGradient>
+    <linearGradient id="gBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a2638"/><stop offset="100%" stop-color="#0f1b2d"/></linearGradient>
+    <linearGradient id="gCylBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0f4a72"/><stop offset="100%" stop-color="#082e48"/></linearGradient>
+    <linearGradient id="gCap" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3db8f0"/><stop offset="100%" stop-color="#0072b8"/></linearGradient>
+    <linearGradient id="gBolt" x1="0" y1="0.3" x2="0.3" y2="1"><stop offset="0%" stop-color="#ffe259"/><stop offset="100%" stop-color="#f5a623"/></linearGradient>
     <radialGradient id="glow" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#0090e0" stop-opacity="0.10"/>
       <stop offset="100%" stop-color="#0090e0" stop-opacity="0"/>
@@ -21,10 +22,10 @@
   <!-- Logo icon — rounded square bg, scaled to ~200px -->
   <g transform="translate(110, 195) scale(6.25)">
     <rect width="32" height="32" rx="7" fill="url(#gBody)"/>
-    <rect x="5" y="14" width="22" height="12" rx="1.5" fill="#0d3a58"/>
-    <ellipse cx="16" cy="26" rx="11" ry="3" fill="#061525"/>
-    <ellipse cx="16" cy="14" rx="11" ry="3" fill="url(#gCap)"/>
-    <path d="M18 3 L13 14h4.5L11 29 21 13h-4.5Z" fill="url(#gBolt)"/>
+    <rect x="6" y="13" width="20" height="12" rx="1" fill="url(#gCylBody)"/>
+    <ellipse cx="16" cy="25" rx="10" ry="2.5" fill="#082e48"/>
+    <ellipse cx="16" cy="13" rx="10" ry="2.5" fill="url(#gCap)"/>
+    <path d="M18.5 4 L13 16 h4 L11 28 21 14 h-4 Z" fill="url(#gBolt)"/>
   </g>
 
   <!-- Title -->
