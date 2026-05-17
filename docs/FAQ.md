@@ -6,15 +6,25 @@ Yes. Credentials are stored in browser localStorage and only sent to the local b
 
 ## Why the OS security warning?
 
-The binary is not code-signed. Certificates cost $300–500/year per platform. Since the code is open source, you can build the binary yourself. See [[Setup#os-security-warnings]].
+The binary is not code-signed (certificates cost $300–500/year per platform). Use the one-line installer — it removes the warning automatically:
+
+```bash
+# macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/BunAgents/bun-sql-editor/main/install.sh | bash
+
+# Windows
+irm https://raw.githubusercontent.com/BunAgents/bun-sql-editor/main/install.ps1 | iex
+```
+
+Since the code is open source, you can also build the binary yourself. See [[Setup#build-from-source]].
 
 ## Can I use this with a team?
 
-Yes, with caveats. Run the binary on a shared machine inside your VPN, and put an auth proxy (Nginx basic auth, Cloudflare Access) in front of it. There is no built-in authentication.
+Yes, with caveats. Run the binary on a shared machine inside your VPN, and put an auth proxy (Nginx basic auth, Cloudflare Access) in front of it. There is no built-in authentication beyond the optional screen lock PIN.
 
 ## Why not a cloud version?
 
-A cloud-hosted version would require credentials to pass through a third-party server. That's a poor security trade-off for a database tool. See the [blog post](https://github.com/BunAgents/bun-sql-editor/blob/main/landing/blog/why-local.html) for the full explanation.
+A cloud-hosted version would require credentials to pass through a third-party server. That's a poor security trade-off for a database tool.
 
 ## Can I connect to a remote database?
 
@@ -39,8 +49,8 @@ The UI shell is cached by the service worker. Queries require a live connection 
 ## Can I run multiple instances?
 
 ```bash
-PORT=3001 ./bun-sql-editor &
-PORT=3002 ./bun-sql-editor &
+PORT=3001 bun-sql-editor &
+PORT=3002 bun-sql-editor &
 ```
 
 Each instance has independent localStorage (scoped to the port).
