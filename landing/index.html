@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Bun SQL Editor — a lightweight, open-source SQL workbench for PostgreSQL, MySQL, MongoDB and ClickHouse. Runs as a local binary, no cloud required." />
+  <title>Bun SQL Editor — Local SQL Workbench</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗄️</text></svg>" />
+</head>
+<body>
+
+<!-- ══ NAV ══════════════════════════════════════════════════════════ -->
+<nav>
+  <div class="nav-logo">
+    <svg width="22" height="22" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="nt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#45c8f5"/><stop offset="100%" stop-color="#0080cc"/></linearGradient>
+        <linearGradient id="nb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0d4a72"/><stop offset="100%" stop-color="#08304e"/></linearGradient>
+        <linearGradient id="nl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffe55a"/><stop offset="100%" stop-color="#f5a020"/></linearGradient>
+      </defs>
+      <rect x="5" y="11" width="20" height="13" rx="1" fill="url(#nb)"/>
+      <ellipse cx="15" cy="24" rx="10" ry="3" fill="#082e48"/>
+      <ellipse cx="15" cy="11" rx="10" ry="3" fill="url(#nt)"/>
+      <path d="M17.5 3 L13 13.5 h3.5 L12 27 L21 12 h-3.5 Z" fill="url(#nl)" opacity="0.96"/>
+    </svg>
+    Bun SQL Editor
+  </div>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#why-local">Why Local</a></li>
+    <li><a href="#setup">Setup</a></li>
+    <li><a href="#download">Download</a></li>
+    <li><a href="https://github.com/BunAgents/bun-sql-editor">GitHub</a></li>
+  </ul>
+  <a href="https://github.com/BunAgents/bun-sql-editor/releases" class="btn btn-primary" style="margin-left:auto;">
+    Download
+  </a>
+</nav>
+
+<!-- ══ HERO ══════════════════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-badge">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+    Open Source · MIT License
+  </div>
+  <h1>A SQL Workbench That<br/><span>Stays on Your Machine</span></h1>
+  <p>
+    Connect to PostgreSQL, MySQL, MongoDB, and ClickHouse. Browse schemas, run queries,
+    visualize ERDs — all from a single binary with no installation, no cloud, no vendor lock-in.
+  </p>
+  <div class="hero-actions">
+    <a href="https://github.com/BunAgents/bun-sql-editor/releases" class="btn btn-primary">
+      Download Latest Release
+    </a>
+    <a href="https://github.com/BunAgents/bun-sql-editor" class="btn btn-outline">
+      View on GitHub
+    </a>
+  </div>
+</section>
+
+<!-- ══ FEATURES ══════════════════════════════════════════════════════ -->
+<section id="features">
+  <div class="container">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">Everything you need, nothing you don't</h2>
+    <p class="section-sub">Built for developers who want a fast, keyboard-friendly SQL editor without the bloat of a full IDE.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🗄️</div>
+        <h3>Multi-Database Support</h3>
+        <p>Connect to PostgreSQL, MySQL, MongoDB, and ClickHouse from a single interface. Switch connections in seconds.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <h3>Schema Explorer</h3>
+        <p>Browse tables, views, materialized views, sequences, triggers, and functions in a collapsible tree sidebar.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✏️</div>
+        <h3>Smart Autocomplete</h3>
+        <p>Context-aware SQL autocomplete with schema, table, and column suggestions. Handles case-sensitive identifiers automatically.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🗺️</div>
+        <h3>ERD Diagrams</h3>
+        <p>Visualize foreign key relationships per schema. Drag table cards, zoom, pan, and see bezier FK lines at a glance.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✏️</div>
+        <h3>Inline Cell Editing</h3>
+        <p>Double-click any result cell to edit it. Generates a safe UPDATE statement automatically targeting the right row by primary key.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎨</div>
+        <h3>SQL Formatter</h3>
+        <p>Format messy SQL with Ctrl+Shift+F. Token-based parser that respects string literals, comments, and identifiers.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📜</div>
+        <h3>Query History</h3>
+        <p>Every query you run is saved locally. Press Ctrl+H to browse, search, and replay past queries instantly.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔧</div>
+        <h3>Maintenance Commands</h3>
+        <p>Right-click any table to run VACUUM ANALYZE or REINDEX. Keeps your PostgreSQL databases healthy without memorizing syntax.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <h3>PWA Installable</h3>
+        <p>Install to your home screen or desktop for a native-app feel. Works offline for the UI shell — queries run through your local server.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ WHY LOCAL / TRUST ══════════════════════════════════════════════ -->
+<section id="why-local">
+  <div class="container">
+    <div class="section-label">Why Local</div>
+    <h2 class="section-title">Why not a cloud-hosted PWA?</h2>
+    <p class="section-sub">A fair question — here's the honest answer.</p>
+
+    <div class="trust-box">
+      <h3>🔒 The Browser TCP Wall</h3>
+      <p>
+        Browsers cannot open raw TCP connections — and that's intentional. Database protocols like PostgreSQL wire protocol,
+        MySQL binary protocol, and MongoDB BSON are all TCP-based. There is no way for a web page to connect directly
+        to your database server without a backend proxy in between.
+      </p>
+      <p>
+        This means any web-based SQL editor — including Bun SQL Editor — <strong>requires a server</strong> to act as the bridge
+        between your browser and your database. There is no purely client-side solution for connecting to external databases.
+      </p>
+    </div>
+
+    <div class="trust-box">
+      <h3>🤝 The Trust Problem</h3>
+      <p>
+        If that proxy server is hosted by someone else (a SaaS), your database credentials — host, port, username, password —
+        must travel through their infrastructure. Even if they promise not to log them, you have to take their word for it.
+      </p>
+      <p>
+        <strong>Bun SQL Editor solves this by making you the server.</strong> The binary runs on your own machine.
+        Your credentials never leave your computer. The browser talks to <code>localhost</code>, not a cloud endpoint.
+        You can read every line of the source code and verify this yourself.
+      </p>
+    </div>
+
+    <div class="trust-grid">
+      <div class="trust-item">
+        <h4><span class="tag-red">✗</span> Cloud-hosted SQL editors</h4>
+        <p>Your credentials pass through a third-party server. You must trust their security, logging practices, and uptime.</p>
+      </div>
+      <div class="trust-item">
+        <h4><span class="tag-green">✓</span> Bun SQL Editor (local binary)</h4>
+        <p>The server is on your machine. Credentials go to <code>localhost</code> only. Open source — audit it yourself.</p>
+      </div>
+      <div class="trust-item">
+        <h4><span class="tag-red">✗</span> Desktop app (signed)</h4>
+        <p>Code signing requires $300–500/year certificates per platform. Closed binary — you have to trust it anyway.</p>
+      </div>
+      <div class="trust-item">
+        <h4><span class="tag-green">✓</span> Bun SQL Editor (open source binary)</h4>
+        <p>No signing required. macOS/Windows show a one-time warning — click "Open Anyway." Source is public so you know what runs.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SETUP ══════════════════════════════════════════════════════════ -->
+<section id="setup">
+  <div class="container">
+    <div class="section-label">Setup</div>
+    <h2 class="section-title">Up and running in 30 seconds</h2>
+    <p class="section-sub">No installation, no runtime dependencies, no Docker required.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Download the binary for your platform</h4>
+          <p>Grab the latest release from GitHub Releases for your OS.</p>
+          <div class="platform-grid">
+            <div class="platform-card">
+              <h4>🍎 macOS (Apple Silicon)</h4>
+              <p><code>bun-sql-editor-macos-arm64</code></p>
+            </div>
+            <div class="platform-card">
+              <h4>🍎 macOS (Intel)</h4>
+              <p><code>bun-sql-editor-macos-x64</code></p>
+            </div>
+            <div class="platform-card">
+              <h4>🪟 Windows</h4>
+              <p><code>bun-sql-editor-windows-x64.exe</code></p>
+            </div>
+            <div class="platform-card">
+              <h4>🐧 Linux</h4>
+              <p><code>bun-sql-editor-linux-x64</code></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Make it executable (macOS / Linux)</h4>
+          <p>Windows users can skip this step.</p>
+          <pre>chmod +x bun-sql-editor-macos-arm64</pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Run it</h4>
+          <p>The server starts on port 3000 by default. Set <code>PORT</code> to change it.</p>
+          <pre># macOS / Linux
+./bun-sql-editor-macos-arm64
+
+# Windows
+bun-sql-editor-windows-x64.exe
+
+# Custom port
+PORT=8080 ./bun-sql-editor-macos-arm64</pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>Open your browser</h4>
+          <p>Navigate to <code>http://localhost:3000</code> and connect to your database. That's it.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="trust-box" style="margin-top:2rem;">
+      <h3>⚠️ macOS / Windows security warning</h3>
+      <p>
+        Because the binary is not code-signed (signing certificates cost $300–500/year per platform), your OS will show a
+        security warning the first time you run it.
+      </p>
+      <p>
+        <strong>macOS:</strong> Right-click the binary → Open → click "Open" in the dialog. You only need to do this once.
+        Alternatively: <code>System Settings → Privacy &amp; Security → Open Anyway</code>.
+      </p>
+      <p>
+        <strong>Windows:</strong> Click "More info" → "Run anyway" in the SmartScreen dialog.
+      </p>
+      <p>
+        The source code is fully public. You can clone the repo, inspect every line, and build the binary yourself
+        if you prefer not to trust a pre-built release.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ BUILD FROM SOURCE ══════════════════════════════════════════════ -->
+<section id="build">
+  <div class="container">
+    <div class="section-label">Build from Source</div>
+    <h2 class="section-title">Prefer to build it yourself?</h2>
+    <p class="section-sub">You need <a href="https://bun.sh" target="_blank" rel="noopener">Bun</a> installed.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Clone and install</h4>
+          <pre>git clone https://github.com/BunAgents/bun-sql-editor
+cd bun-sql-editor
+bun install</pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Run in dev mode</h4>
+          <pre>bun run dev</pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Compile a single binary</h4>
+          <pre>bun build --compile --target=bun-darwin-arm64 app/server.ts --outfile=bun-sql-editor</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ LINKS ══════════════════════════════════════════════════════════ -->
+<section id="download">
+  <div class="container">
+    <div class="section-label">Links</div>
+    <h2 class="section-title">Get involved</h2>
+    <p class="section-sub">Everything lives on GitHub — releases, issues, and changelog.</p>
+    <div class="links-grid">
+      <a href="https://github.com/BunAgents/bun-sql-editor/releases" class="link-card">
+        <div class="link-card-icon">📦</div>
+        <div class="link-card-body">
+          <h4>Releases</h4>
+          <p>Download binaries and read release notes</p>
+        </div>
+      </a>
+      <a href="https://github.com/BunAgents/bun-sql-editor/issues" class="link-card">
+        <div class="link-card-icon">🐛</div>
+        <div class="link-card-body">
+          <h4>Issues</h4>
+          <p>Report bugs or request features</p>
+        </div>
+      </a>
+      <a href="https://github.com/BunAgents/bun-sql-editor/blob/main/CHANGELOG.md" class="link-card">
+        <div class="link-card-icon">📋</div>
+        <div class="link-card-body">
+          <h4>Changelog</h4>
+          <p>See what changed in every release</p>
+        </div>
+      </a>
+      <a href="https://github.com/BunAgents/bun-sql-editor" class="link-card">
+        <div class="link-card-icon">⭐</div>
+        <div class="link-card-body">
+          <h4>Source Code</h4>
+          <p>Read the code, contribute, or fork it</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══════════════════════════════════════════════════════════ -->
+<footer>
+  <p>
+    Built with <a href="https://bun.sh" target="_blank" rel="noopener">Bun</a> ·
+    <a href="https://github.com/BunAgents/bun-sql-editor" target="_blank" rel="noopener">GitHub</a> ·
+    <a href="https://github.com/BunAgents/bun-sql-editor/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+  </p>
+</footer>
+
+</body>
+</html>
