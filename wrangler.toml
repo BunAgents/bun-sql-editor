@@ -1,3 +1,7 @@
 name = "bun-sql-editor-landing"
 pages_build_output_dir = "landing"
 compatibility_date = "2024-01-01"
+
+[assets]
+   directory = "./landing"
+   binding = "ASSETS"
