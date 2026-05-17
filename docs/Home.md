@@ -10,6 +10,7 @@ A lightweight, open-source SQL workbench distributed as a single self-contained 
 
 - [[Setup]] — Download and run the binary
 - [[Features]] — Full feature reference
+- [[Architecture]] — Source layout, bundle strategy, module groups
 - [[FAQ]] — Common questions
 - [[Contributing]] — How to contribute
 

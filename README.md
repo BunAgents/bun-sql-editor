@@ -109,8 +109,11 @@ Requires [Bun](https://bun.sh):
 git clone https://github.com/BunAgents/bun-sql-editor
 cd bun-sql-editor
 bun install
-bun run dev          # development with hot reload → http://localhost:3000
-bun run build        # type check
+bun run dev              # development with hot reload → http://localhost:3000
+bun run build:client     # bundle TypeScript client → app/public/app.js
+bun run build            # type check + bundle
+bun test                 # run unit tests (32 tests, no DB required)
+bun run test:e2e         # run Playwright E2E tests (needs app running)
 ```
 
 Compile a self-contained binary:
@@ -119,10 +122,13 @@ Compile a self-contained binary:
 # macOS ARM
 bun build --compile --target=bun-darwin-arm64 app/server.ts --outfile=bun-sql-editor
 
-# Linux
+# macOS Intel
+bun build --compile --target=bun-darwin-x64 app/server.ts --outfile=bun-sql-editor
+
+# Linux x64
 bun build --compile --target=bun-linux-x64 app/server.ts --outfile=bun-sql-editor
 
-# Windows
+# Windows x64
 bun build --compile --target=bun-windows-x64 app/server.ts --outfile=bun-sql-editor.exe
 ```
 
@@ -130,26 +136,74 @@ bun build --compile --target=bun-windows-x64 app/server.ts --outfile=bun-sql-edi
 
 ## Project Structure
 
+The client source is split into three groups under `app/client/`. All groups compile to a **single `app.js` bundle** via `bun build` — no runtime module loading, no extra HTTP requests. The grouping is purely for source organization.
+
 ```
 app/
-  adapters/         # Database-specific query runners
+  adapters/              # Database-specific query runners (server-side)
     postgres.ts
     mysql.ts
     mongodb.ts
     clickhouse.ts
-  public/           # Frontend (vanilla JS, no framework, no bundler)
-    app.js
+  client/                # Frontend TypeScript — bundled → public/app.js
+    main.ts              # Entry point: boot sequence + event wiring
+    core/                # Pure logic — no DOM, no network (unit-testable)
+      types.ts           # All client-side type definitions
+      tokenizer.ts       # SQL tokenizer (keywords, strings, comments)
+      formatter.ts       # SQL formatter
+      utils.ts           # sortedRows, csvEscape
+      lock-core.ts       # hashPin / hasPin (SHA-256 via Web Crypto)
+    data/                # State, API, persistence — no direct DOM
+      state.ts           # AppState singleton (S) + activeConn/activeTab helpers
+      api.ts             # fetch wrappers: apiQuery, apiSchema, apiColumns, apiErd
+      persistence.ts     # localStorage save/load
+    ui/                  # DOM-coupled feature modules
+      dom.ts             # Typed getElementById refs for every DOM element
+      svg.ts             # SVG icon builder
+      status.ts          # Status bar
+      theme.ts           # Dark/light theme toggle
+      editor.ts          # Syntax highlight layer + gutter + resize handle
+      results.ts         # Result table render + inline cell editing + CSV/JSON export
+      tabs.ts            # Tab lifecycle: create, close, switch, sync
+      connections.ts     # Connection list + add/edit modal
+      schema.ts          # Schema sidebar tree + lazy column loading
+      query.ts           # runQuery, runExplain, executeDdl
+      history.ts         # Query history panel
+      ddl.ts             # Table editor + DDL/ALTER generation
+      erd.ts             # ERD diagram: pan, zoom, drag, FK lines
+      autocomplete.ts    # Inline SQL/schema autocomplete dropdown
+      contextmenu.ts     # Right-click context menu
+      lock.ts            # Screen lock + PIN management
+  public/                # Served static files
+    app.js               # Built bundle (output of bun run build:client)
     index.html
     styles.css
-  server.ts         # Bun HTTP server + API routing
-  types.ts          # Shared TypeScript types
-landing/            # Static landing page (wiki, blog)
-  wiki/
-  blog/
-docs/               # GitHub Wiki source
-.github/workflows/
-  release.yml       # Build binaries on release-v* tags
+  server.ts              # Bun HTTP server + API routing
+  types.ts               # Shared server-side types
+tests/
+  unit/                  # Bun unit tests — no DOM, no DB, no network
+    core/
+      tokenizer.test.ts  # SQL tokenizer: 9 tests
+      formatter.test.ts  # SQL formatter: 8 tests
+      utils.test.ts      # csvEscape + sortedRows: 11 tests
+      lock.test.ts       # PIN hashing (SHA-256): 4 tests
+  e2e/                   # Playwright end-to-end tests
+    app.spec.ts          # UI flows: tabs, theme, connections, editor, lock
+landing/                 # Static landing page (wiki, blog)
+docs/                    # GitHub Wiki source
+playwright.config.ts
 ```
+
+### Why a single `app.js`?
+
+Bun's bundler traverses the TypeScript import graph from `main.ts` and emits one minified file. This means:
+
+- **Zero extra HTTP round-trips** — the browser fetches one file, executes one file.
+- **No dynamic module loading** in production — everything is inlined.
+- **Full tree-shaking** — dead code from any module is eliminated.
+- **3 ms build time** — Bun's native bundler is written in Zig, not JavaScript.
+
+The three-folder split (`core/`, `data/`, `ui/`) is a source convention, not a runtime boundary. Unit tests import directly from `core/` because those files carry zero DOM or network dependencies.
 
 ---
 

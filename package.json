@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "bun run --watch app/server.ts",
     "start": "bun run app/server.ts",
-    "build": "tsc --noEmit && echo 'Build OK'",
+    "build:client": "bun build app/client/main.ts --outfile app/public/app.js --minify",
+    "build:check": "tsc --noEmit",
+    "build": "bun run build:check && bun run build:client && echo 'Build OK'",
+    "test": "bun test tests/unit",
+    "test:e2e": "bunx playwright test",
     "check": "tsc --noEmit"
   },
   "dependencies": {
@@ -16,9 +20,10 @@
     "pg": "^8.12.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/bun": "latest",
     "@types/node": "^20.14.12",
-    "typescript": "^5.5.4",
-    "@types/pg": "^8.11.6"
+    "@types/pg": "^8.11.6",
+    "typescript": "^5.5.4"
   }
 }

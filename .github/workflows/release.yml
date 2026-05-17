@@ -18,9 +18,9 @@ jobs:
           - os: macos-latest
             target: bun-darwin-arm64
             artifact: bun-sql-editor-macos-arm64
-          - os: macos-13
-            target: bun-darwin-x64
-            artifact: bun-sql-editor-macos-x64
+          # - os: macos-13
+          #   target: bun-darwin-x64
+          #   artifact: bun-sql-editor-macos-x64
           - os: ubuntu-latest
             target: bun-linux-x64
             artifact: bun-sql-editor-linux-x64
