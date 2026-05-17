@@ -2264,19 +2264,18 @@ body {
 }
 
 .lock-pin-row {
-  display: flex;
-  align-items: stretch;
-  gap: 6px;
+  position: relative;
   width: 100%;
   margin-top: 4px;
 }
 
 .lock-pin-input {
-  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
   background: var(--bg-3);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 8px 12px;
+  padding: 10px 44px 10px 12px;
   font-size: 14px;
   color: var(--text);
   outline: none;
@@ -2293,10 +2292,15 @@ body {
 }
 
 .lock-pin-btn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
   background: var(--brand);
   border: none;
-  border-radius: 6px;
-  width: 40px;
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
