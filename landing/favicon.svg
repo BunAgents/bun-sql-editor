@@ -1,11 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 30 30" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
   <defs>
-    <linearGradient id="nt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#45c8f5"/><stop offset="100%" stop-color="#0080cc"/></linearGradient>
-    <linearGradient id="nb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0d4a72"/><stop offset="100%" stop-color="#08304e"/></linearGradient>
-    <linearGradient id="nl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffe55a"/><stop offset="100%" stop-color="#f5a020"/></linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a5e8a"/>
+      <stop offset="100%" stop-color="#0a2e45"/>
+    </linearGradient>
+    <linearGradient id="cap" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#50d0f8"/>
+      <stop offset="100%" stop-color="#0090e0"/>
+    </linearGradient>
+    <linearGradient id="bolt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe84a"/>
+      <stop offset="100%" stop-color="#f59000"/>
+    </linearGradient>
   </defs>
-  <rect x="5" y="11" width="20" height="13" rx="1" fill="url(#nb)"/>
-  <ellipse cx="15" cy="24" rx="10" ry="3" fill="#082e48"/>
-  <ellipse cx="15" cy="11" rx="10" ry="3" fill="url(#nt)"/>
-  <path d="M17.5 3 L13 13.5 h3.5 L12 27 L21 12 h-3.5 Z" fill="url(#nl)" opacity="0.96"/>
+  <!-- Cylinder body -->
+  <rect x="4" y="12" width="24" height="15" rx="2" fill="url(#body)"/>
+  <!-- Bottom rim -->
+  <ellipse cx="16" cy="27" rx="12" ry="3.5" fill="#071e2d"/>
+  <!-- Top cap -->
+  <ellipse cx="16" cy="12" rx="12" ry="3.5" fill="url(#cap)"/>
+  <!-- Bolt -->
+  <path d="M19 2 L14 14h5L12 30 22 13h-5Z" fill="url(#bolt)"/>
 </svg>

@@ -7,25 +7,23 @@
     <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
       <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#2d2d30" stroke-width="1"/>
     </pattern>
-    <linearGradient id="gTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#45c8f5"/><stop offset="100%" stop-color="#0080cc"/></linearGradient>
-    <linearGradient id="gBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0d4a72"/><stop offset="100%" stop-color="#08304e"/></linearGradient>
-    <linearGradient id="gBolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffe55a"/><stop offset="100%" stop-color="#f5a020"/></linearGradient>
+    <linearGradient id="gBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a5e8a"/><stop offset="100%" stop-color="#0a2e45"/></linearGradient>
+    <linearGradient id="gCap" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#50d0f8"/><stop offset="100%" stop-color="#0090e0"/></linearGradient>
+    <linearGradient id="gBolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffe84a"/><stop offset="100%" stop-color="#f59000"/></linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0090e0" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#0090e0" stop-opacity="0"/>
+    </radialGradient>
   </defs>
   <rect width="1200" height="630" fill="url(#grid)"/>
-
-  <!-- Glow -->
-  <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-    <stop offset="0%" stop-color="#007acc" stop-opacity="0.12"/>
-    <stop offset="100%" stop-color="#007acc" stop-opacity="0"/>
-  </radialGradient>
   <rect width="1200" height="630" fill="url(#glow)"/>
 
-  <!-- Logo icon (scaled up, centered-left) -->
-  <g transform="translate(160, 215) scale(6.67)">
-    <rect x="5" y="11" width="20" height="13" rx="1" fill="url(#gBody)"/>
-    <ellipse cx="15" cy="24" rx="10" ry="3" fill="#082e48"/>
-    <ellipse cx="15" cy="11" rx="10" ry="3" fill="url(#gTop)"/>
-    <path d="M17.5 3 L13 13.5 h3.5 L12 27 L21 12 h-3.5 Z" fill="url(#gBolt)" opacity="0.96"/>
+  <!-- Logo icon — new design, scaled to 200px, centered-left -->
+  <g transform="translate(120, 190) scale(6.25)">
+    <rect x="4" y="12" width="24" height="15" rx="2" fill="url(#gBody)"/>
+    <ellipse cx="16" cy="27" rx="12" ry="3.5" fill="#071e2d"/>
+    <ellipse cx="16" cy="12" rx="12" ry="3.5" fill="url(#gCap)"/>
+    <path d="M19 2 L14 14h5L12 30 22 13h-5Z" fill="url(#gBolt)"/>
   </g>
 
   <!-- Title -->
