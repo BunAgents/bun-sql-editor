@@ -1,5 +1,3 @@
 name = "bun-sql-editor-landing"
+pages_build_output_dir = "landing"
 compatibility_date = "2024-01-01"
-
-[site]
-bucket = "./landing"
