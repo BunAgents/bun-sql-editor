@@ -43,7 +43,7 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
         GitHub
       </a>
-      <a href="https://github.com/BunAgents/bun-sql-editor/releases" class="btn btn-default btn-sm">Download</a>
+      <a href="wiki/setup.html" class="btn btn-default btn-sm">Install</a>
     </div>
   </div>
 </header>
@@ -60,8 +60,8 @@
       No cloud. No signup. Your credentials never leave your machine.
     </p>
     <div class="hero-actions">
-      <a href="https://github.com/BunAgents/bun-sql-editor/releases" class="btn btn-default btn-lg">
-        Download Latest
+      <a href="wiki/setup.html" class="btn btn-default btn-lg">
+        Install — One Line
       </a>
       <a href="wiki/index.html" class="btn btn-outline btn-lg">Read the Docs</a>
     </div>
@@ -172,54 +172,45 @@
   <div class="container-sm">
     <div class="section-tag">Quick start</div>
     <h2 class="section-title">Up in 30 seconds</h2>
-    <p class="section-sub" style="margin-bottom:2.5rem">No runtime dependencies. No Docker. Just download and run.</p>
+    <p class="section-sub" style="margin-bottom:2.5rem">No runtime. No Docker. One command installs and removes the OS security warning automatically.</p>
 
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
         <div class="step-body">
-          <h4>Download the binary for your platform</h4>
-          <div class="platform-grid" style="margin-top:0.75rem">
-            <div class="platform-card">
-              <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg> macOS ARM</h4>
-              <p><code>bun-sql-editor-macos-arm64</code></p>
-            </div>
-            <div class="platform-card">
-              <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg> macOS Intel</h4>
-              <p><code>bun-sql-editor-macos-x64</code></p>
-            </div>
-            <div class="platform-card">
-              <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg> Windows</h4>
-              <p><code>bun-sql-editor-windows-x64.exe</code></p>
-            </div>
-            <div class="platform-card">
-              <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><path d="M20.581 19.049c-.55-.446-.336-1.431-.907-1.917.553-3.365-.997-6.331-2.845-8.232-1.551-1.595-1.051-3.147-1.051-4.65 0-2.528-3.51-2.528-3.51 0v.142c-.492-.189-1.011-.227-1.562-.073-1.526-1.537-2.096-.198-2.095.81.001.452.014.67-.17.852-.283.282-.268 1.597-.088 2.201-1.177 1.907-1.843 4.549-1.286 7.744-.571.486-.357 1.471-.907 1.917-1.207.977-.083 2.725 1.464 2.082.945-.393 1.901-.112 2.633.543.732.655 1.039 1.614.578 2.836.661.219.688-.896.391-1.529-.215-.453-.683-1.061-.479-1.495.203-.434.802-.416 1.281-.508.479-.093.952-.256 1.365-.467.413.211.886.374 1.365.467.479.092 1.078.074 1.281.508.204.434-.264 1.042-.479 1.495-.297.633-.27 1.748.391 1.529-.461-1.222-.154-2.181.578-2.836.732-.655 1.688-.936 2.633-.543 1.547.643 2.671-1.105 1.464-2.082z"/></svg> Linux</h4>
-              <p><code>bun-sql-editor-linux-x64</code></p>
-            </div>
-          </div>
+          <h4>Install <span style="color:var(--muted-fg);font-weight:400">— macOS / Linux</span></h4>
+          <pre>curl -fsSL https://raw.githubusercontent.com/BunAgents/bun-sql-editor/main/install.sh | bash</pre>
+          <p style="margin-top:0.5rem;font-size:0.875rem;color:var(--muted-fg)">Detects your platform, downloads the binary, removes the quarantine flag, installs to <code>/usr/local/bin</code>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Install <span style="color:var(--muted-fg);font-weight:400">— Windows (PowerShell)</span></h4>
+          <pre>irm https://raw.githubusercontent.com/BunAgents/bun-sql-editor/main/install.ps1 | iex</pre>
+          <p style="margin-top:0.5rem;font-size:0.875rem;color:var(--muted-fg)">Downloads the binary, clears the SmartScreen flag, adds to your user PATH.</p>
         </div>
       </div>
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-body">
-          <h4>Make it executable <span style="color:var(--muted-fg);font-weight:400">(macOS / Linux)</span></h4>
-          <pre>chmod +x bun-sql-editor-macos-arm64</pre>
+          <h4>Run it</h4>
+          <pre>bun-sql-editor</pre>
         </div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-body">
-          <h4>Run it</h4>
-          <pre>./bun-sql-editor-macos-arm64
-# open http://localhost:3000</pre>
+          <h4>Open in your browser</h4>
+          <pre>http://localhost:3000</pre>
         </div>
       </div>
     </div>
 
-    <div class="callout callout-warning" style="margin-top:1.5rem">
-      <div class="callout-icon">⚠</div>
+    <div class="callout callout-info" style="margin-top:1.5rem">
+      <div class="callout-icon">ℹ</div>
       <div class="callout-body">
-        <strong>macOS / Windows security prompt</strong> — The binary is not code-signed (certificates cost $300–500/yr per platform). On macOS: right-click → Open → "Open". On Windows: "More info" → "Run anyway". You only need to do this once. <a href="wiki/setup.html#security-warning">Full guide →</a>
+        Prefer to download manually? Grab the binary from <a href="https://github.com/BunAgents/bun-sql-editor/releases">Releases</a>. See <a href="wiki/setup.html">Setup docs</a> for platform-specific instructions.
       </div>
     </div>
 

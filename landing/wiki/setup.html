@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Installation &amp; Setup — Bun SQL Editor</title>
-  <meta name="description" content="How to download, install, and run Bun SQL Editor on macOS, Windows, and Linux." />
+  <meta name="description" content="How to install and run Bun SQL Editor on macOS, Windows, and Linux." />
   <meta property="og:title" content="Installation &amp; Setup — Bun SQL Editor" />
-  <meta property="og:description" content="How to download, install, and run Bun SQL Editor on macOS, Windows, and Linux." />
+  <meta property="og:description" content="How to install and run Bun SQL Editor on macOS, Windows, and Linux." />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="https://bun-sql-editor.pages.dev/og-image.svg" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -21,14 +21,13 @@
       <img src="../logo.svg" width="28" height="28" alt="" aria-hidden="true" style="display:block;flex-shrink:0" />
       Bun SQL Editor
     </a>
-
     <nav class="nav-links">
       <a href="index.html" class="active">Docs</a>
       <a href="../blog/index.html">Blog</a>
     </nav>
     <div class="nav-right">
       <a href="https://github.com/BunAgents/bun-sql-editor" class="btn btn-ghost btn-sm">GitHub</a>
-      <a href="https://github.com/BunAgents/bun-sql-editor/releases" class="btn btn-default btn-sm">Download</a>
+      <a href="https://github.com/BunAgents/bun-sql-editor/releases" class="btn btn-default btn-sm">Releases</a>
     </div>
   </div>
 </header>
@@ -57,66 +56,82 @@
 
   <main class="wiki-content">
     <div class="prose">
-      <h1>Installation & Setup</h1>
-      <p>Bun SQL Editor is distributed as a single self-contained binary. There is no installer, no runtime to install, and no Docker required.</p>
+      <h1>Installation &amp; Setup</h1>
+      <p>Bun SQL Editor is a single self-contained binary. No runtime, no Docker, no installer required.</p>
 
-      <h2>Step 1 — Download</h2>
-      <p>Go to the <a href="https://github.com/BunAgents/bun-sql-editor/releases">Releases page</a> and download the binary for your platform:</p>
+      <h2>Install — One Line</h2>
+
+      <h3>macOS / Linux</h3>
+      <pre>curl -fsSL https://raw.githubusercontent.com/BunAgents/bun-sql-editor/main/install.sh | bash</pre>
+      <p>The script:</p>
+      <ul>
+        <li>Detects your platform (macOS arm64 / x64, Linux x64)</li>
+        <li>Downloads the latest binary from GitHub Releases</li>
+        <li>Removes the macOS quarantine flag automatically — no "damaged" warning</li>
+        <li>Installs to <code>/usr/local/bin/bun-sql-editor</code> (uses <code>sudo</code> if needed)</li>
+      </ul>
+
+      <h3>Windows</h3>
+      <p>Open PowerShell and run:</p>
+      <pre>irm https://raw.githubusercontent.com/BunAgents/bun-sql-editor/main/install.ps1 | iex</pre>
+      <p>The script:</p>
+      <ul>
+        <li>Downloads the latest binary from GitHub Releases</li>
+        <li>Runs <code>Unblock-File</code> to clear the SmartScreen flag</li>
+        <li>Installs to <code>%LOCALAPPDATA%\bun-sql-editor\</code></li>
+        <li>Adds the install directory to your user PATH</li>
+      </ul>
+
+      <h2>Run</h2>
+      <pre>bun-sql-editor</pre>
+      <p>Open <a href="http://localhost:3000">http://localhost:3000</a> in your browser.</p>
+      <pre># Custom port (default: 3000)
+PORT=8080 bun-sql-editor</pre>
+
+      <h2 id="manual">Manual Download</h2>
+      <p>Download the binary directly from <a href="https://github.com/BunAgents/bun-sql-editor/releases">GitHub Releases</a>:</p>
       <div class="platform-grid">
-        <div class="platform-card"><h4>🍎 macOS Apple Silicon</h4><p><code>bun-sql-editor-macos-arm64</code></p><p>M1, M2, M3, M4 Macs</p></div>
-        <div class="platform-card"><h4>🍎 macOS Intel</h4><p><code>bun-sql-editor-macos-x64</code></p><p>Intel Macs (pre-2020)</p></div>
-        <div class="platform-card"><h4>🪟 Windows</h4><p><code>bun-sql-editor-windows-x64.exe</code></p><p>Windows 10/11 x64</p></div>
-        <div class="platform-card"><h4>🐧 Linux</h4><p><code>bun-sql-editor-linux-x64</code></p><p>Ubuntu, Debian, Arch, etc.</p></div>
+        <div class="platform-card"><h4>macOS Apple Silicon</h4><p><code>bun-sql-editor-macos-arm64</code></p><p>M1, M2, M3, M4</p></div>
+        <div class="platform-card"><h4>macOS Intel</h4><p><code>bun-sql-editor-macos-x64</code></p><p>Intel Macs (pre-2020)</p></div>
+        <div class="platform-card"><h4>Windows x64</h4><p><code>bun-sql-editor-windows-x64.exe</code></p><p>Windows 10/11</p></div>
+        <div class="platform-card"><h4>Linux x64</h4><p><code>bun-sql-editor-linux-x64</code></p><p>Ubuntu, Debian, Arch…</p></div>
       </div>
 
-      <h2>Step 2 — Make executable (macOS / Linux)</h2>
-      <p>Windows users can skip this step.</p>
-      <pre>chmod +x bun-sql-editor-macos-arm64</pre>
+      <pre># macOS / Linux — make executable first
+chmod +x bun-sql-editor-macos-arm64
+./bun-sql-editor-macos-arm64</pre>
 
-      <h2 id="security-warning">Step 3 — Handle OS security prompt</h2>
-      <div class="callout callout-warning">
-        <div class="callout-icon">⚠</div>
+      <h2 id="security-warning">OS Security Warnings</h2>
+      <div class="callout callout-info">
+        <div class="callout-icon">ℹ</div>
         <div class="callout-body">
-          <strong>Why does this happen?</strong> The binary is not code-signed. Code signing certificates cost $300–500/year per platform. The source code is fully public — you can build the binary yourself if you prefer not to trust the pre-built release.
+          <strong>Use the install script to skip this entirely.</strong> The <code>curl | bash</code> and <code>irm | iex</code> scripts handle the quarantine/SmartScreen removal automatically.
         </div>
       </div>
 
-      <h3>macOS</h3>
-      <p><strong>Option A (easiest):</strong> Right-click the binary → <strong>Open</strong> → click <strong>Open</strong> in the dialog. You only need to do this once.</p>
-      <p><strong>Option B:</strong> Go to <strong>System Settings → Privacy & Security</strong> → scroll down → click <strong>Open Anyway</strong>.</p>
-      <p><strong>Option C (Terminal):</strong></p>
-      <pre>xattr -d com.apple.quarantine bun-sql-editor-macos-arm64</pre>
+      <p>If you downloaded manually:</p>
 
-      <h3>Windows</h3>
-      <p>When SmartScreen appears: click <strong>More info</strong> → <strong>Run anyway</strong>.</p>
+      <h3>macOS — "damaged and can't be opened"</h3>
+      <p>Run in Terminal:</p>
+      <pre>xattr -d com.apple.quarantine bun-sql-editor-macos-arm64</pre>
+      <p>Or: right-click → <strong>Open</strong> → click <strong>Open</strong> in the dialog. You only need to do this once.</p>
+
+      <h3>Windows — SmartScreen</h3>
+      <p>Click <strong>More info</strong> → <strong>Run anyway</strong>. Or right-click the file → <strong>Properties</strong> → check <strong>Unblock</strong> → OK.</p>
 
       <h3>Linux</h3>
-      <p>No warning — just run it directly after <code>chmod +x</code>.</p>
+      <p>No warning — just <code>chmod +x</code> and run.</p>
 
-      <h2>Step 4 — Run</h2>
-      <pre># macOS / Linux
-./bun-sql-editor-macos-arm64
-
-# Windows
-bun-sql-editor-windows-x64.exe
-
-# Custom port (default is 3000)
-PORT=8080 ./bun-sql-editor-macos-arm64</pre>
-
-      <p>You should see:</p>
-      <pre>SQL editor running on http://localhost:3000</pre>
-
-      <h2>Step 5 — Open in browser</h2>
-      <p>Navigate to <a href="http://localhost:3000">http://localhost:3000</a>. The app loads immediately — no login required.</p>
-
-      <h2>Build from source</h2>
-      <p>You need <a href="https://bun.sh">Bun</a> installed (<code>curl -fsSL https://bun.sh/install | bash</code>).</p>
+      <h2>Build from Source</h2>
+      <p>Requires <a href="https://bun.sh">Bun</a>.</p>
       <pre>git clone https://github.com/BunAgents/bun-sql-editor
 cd bun-sql-editor
 bun install
-bun run dev   # development mode with hot reload</pre>
+bun run dev              # hot reload → http://localhost:3000
+bun run build:client     # bundle TypeScript → app/public/app.js
+bun test                 # 32 unit tests, no DB required</pre>
 
-      <p>To compile a single binary:</p>
+      <p>Compile a binary:</p>
       <pre># macOS ARM
 bun build --compile --target=bun-darwin-arm64 app/server.ts --outfile=bun-sql-editor
 
@@ -126,26 +141,18 @@ bun build --compile --target=bun-linux-x64 app/server.ts --outfile=bun-sql-edito
 # Windows x64
 bun build --compile --target=bun-windows-x64 app/server.ts --outfile=bun-sql-editor.exe</pre>
 
-      <h2>Connecting to a database</h2>
-      <p>Click the <strong>+</strong> button in the sidebar to add a new connection. Fill in the host, port, user, password, and database name. Click <strong>Test Connection</strong> to verify, then <strong>Save</strong>.</p>
+      <h2>Connecting to a Database</h2>
+      <p>Click <strong>+</strong> in the sidebar, fill in the connection details, click <strong>Test</strong>, then <strong>Save</strong>.</p>
 
-      <h3>PostgreSQL defaults</h3>
-      <pre>Host: localhost   Port: 5432   User: postgres   DB: postgres</pre>
-
-      <h3>MySQL defaults</h3>
-      <pre>Host: localhost   Port: 3306   User: root   DB: mysql</pre>
-
-      <h3>MongoDB</h3>
-      <p>Use a full connection URI in the Host field:</p>
-      <pre>mongodb://localhost:27017
-mongodb+srv://user:pass@cluster.mongodb.net</pre>
-
-      <h3>ClickHouse defaults</h3>
-      <pre>Host: http://localhost:8123   User: default   DB: default</pre>
+      <h3>Default connection values</h3>
+      <pre>PostgreSQL  localhost:5432   user: postgres   db: postgres
+MySQL       localhost:3306   user: root       db: mysql
+ClickHouse  http://localhost:8123   user: default   db: default
+MongoDB     mongodb://localhost:27017</pre>
 
       <div class="callout callout-success">
         <div class="callout-icon">✓</div>
-        <div class="callout-body">Connection details are stored in your browser's <strong>localStorage</strong> — they never leave your machine and are not sent to any server other than the local binary.</div>
+        <div class="callout-body">Connection details are stored in your browser's <strong>localStorage</strong> — they never leave your machine.</div>
       </div>
     </div>
   </main>
@@ -164,7 +171,7 @@ mongodb+srv://user:pass@cluster.mongodb.net</pre>
 import { injectSEO } from "../seo.js";
 injectSEO({
   title: "Installation & Setup",
-  description: "How to download, install, and run Bun SQL Editor on macOS, Windows, and Linux.",
+  description: "How to install and run Bun SQL Editor on macOS, Windows, and Linux.",
   canonical: "/wiki/setup.html",
   breadcrumbs: [{ name:"Home", path:"/" }, { name:"Docs", path:"/wiki/index.html" }, { name:"Setup", path:"/wiki/setup.html" }],
 });
