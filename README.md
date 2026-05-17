@@ -48,7 +48,15 @@ Open **http://localhost:3000** in your browser.
 PORT=8080 bun-sql-editor
 ```
 
-**Windows** — download manually from [**Releases**](https://github.com/BunAgents/bun-sql-editor/releases):
+**Windows — PowerShell:**
+
+```powershell
+irm https://raw.githubusercontent.com/BunAgents/bun-sql-editor/main/install.ps1 | iex
+```
+
+Installs to `%LOCALAPPDATA%\bun-sql-editor` and adds it to your user `PATH`. Runs `Unblock-File` to clear the SmartScreen flag automatically.
+
+**Manual download** — [**Releases**](https://github.com/BunAgents/bun-sql-editor/releases):
 
 | Platform | File |
 |----------|------|
@@ -56,8 +64,6 @@ PORT=8080 bun-sql-editor
 | macOS Intel | `bun-sql-editor-macos-x64` |
 | Windows x64 | `bun-sql-editor-windows-x64.exe` |
 | Linux x64 | `bun-sql-editor-linux-x64` |
-
-> **Windows SmartScreen:** Click "More info" → "Run anyway"
 
 ---
 
