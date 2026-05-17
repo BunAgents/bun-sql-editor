@@ -63,7 +63,7 @@
       <p>Yes, but with caveats. If you run the binary on a shared server and expose it to the internet, anyone with the URL can connect to your databases. There is currently no built-in authentication. For team use, put it behind a VPN or a reverse proxy with HTTP Basic Auth (e.g. Nginx, Caddy, or Cloudflare Access).</p>
 
       <h2>Why not a cloud-hosted version?</h2>
-      <p>A cloud-hosted version would require your database credentials to pass through a third-party server. We believe that is fundamentally a poor security trade-off for a database tool. See <a href="../blog/why-local.html">Why local? The case for a binary-first SQL editor</a> for the full explanation.</p>
+      <p>A cloud-hosted version would require your database credentials to pass through a third-party server. We believe that is fundamentally a poor security trade-off for a database tool. See <a href="../blog/post.html?slug=why-local">Why local? The case for a binary-first SQL editor</a> for the full explanation.</p>
 
       <h2>Can I connect to a remote database?</h2>
       <p>Yes. The host field accepts any hostname or IP. Your local binary connects directly to the remote database over TCP. Ensure the database port is reachable from your machine (firewall rules, VPN, SSH tunnel if needed).</p>
