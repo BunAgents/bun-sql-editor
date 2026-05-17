@@ -104,6 +104,24 @@ const el = {
   mSsl:            document.getElementById("mSsl"),
   themeColorMeta:  document.getElementById("themeColorMeta"),
   acDropdown:      document.getElementById("acDropdown"),
+  // Lock screen
+  lockBtn:         document.getElementById("lockBtn"),
+  lockScreen:      document.getElementById("lockScreen"),
+  lockPinInput:    document.getElementById("lockPinInput"),
+  lockUnlockBtn:   document.getElementById("lockUnlockBtn"),
+  lockError:       document.getElementById("lockError"),
+  lockSub:         document.getElementById("lockSub"),
+  lockSetupHint:   document.getElementById("lockSetupHint"),
+  lockSetPinBtn:   document.getElementById("lockSetPinBtn"),
+  // Set PIN modal
+  setPinModal:     document.getElementById("setPinModal"),
+  setPinClose:     document.getElementById("setPinClose"),
+  setPinCancelBtn: document.getElementById("setPinCancelBtn"),
+  setPinSaveBtn:   document.getElementById("setPinSaveBtn"),
+  clearPinBtn:     document.getElementById("clearPinBtn"),
+  newPinInput:     document.getElementById("newPinInput"),
+  confirmPinInput: document.getElementById("confirmPinInput"),
+  setPinError:     document.getElementById("setPinError"),
 };
 
 // ─── State ────────────────────────────────────────────────
@@ -3172,9 +3190,121 @@ document.addEventListener("keydown", e => {
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "N") { e.preventDefault(); openModal(); }
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "F") { e.preventDefault(); formatSql(); }
   if ((e.ctrlKey || e.metaKey) && e.key === "h") { e.preventDefault(); toggleHistory(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === "l") { e.preventDefault(); lockScreen(); }
   if (e.key === "F5") { e.preventDefault(); loadSchema(); }
   if (e.key === "Escape" && !el.connModal.hidden) closeModal();
 });
+
+// ─── Screen Lock ──────────────────────────────────────────
+
+const LOCK_PIN_KEY = "bsql_lock_pin_hash";
+const LOCK_STATE_KEY = "bsql_locked";
+
+async function hashPin(pin) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pin));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function hasPin() {
+  return !!localStorage.getItem(LOCK_PIN_KEY);
+}
+
+async function lockScreen() {
+  const locked = el.lockScreen;
+  locked.hidden = false;
+  el.lockPinInput.value = "";
+  el.lockError.hidden = true;
+
+  if (hasPin()) {
+    el.lockSub.textContent = "Enter your PIN to unlock";
+    el.lockSetupHint.hidden = true;
+    el.lockPinInput.type = "password";
+    el.lockPinInput.placeholder = "PIN";
+    el.lockPinInput.disabled = false;
+    el.lockUnlockBtn.disabled = false;
+  } else {
+    el.lockSub.textContent = "Screen is locked";
+    el.lockSetupHint.hidden = false;
+    el.lockPinInput.disabled = true;
+    el.lockUnlockBtn.disabled = true;
+  }
+
+  sessionStorage.setItem(LOCK_STATE_KEY, "1");
+  requestAnimationFrame(() => {
+    if (!el.lockPinInput.disabled) el.lockPinInput.focus();
+  });
+}
+
+async function tryUnlock() {
+  const pin = el.lockPinInput.value.trim();
+  if (!pin) return;
+
+  const storedHash = localStorage.getItem(LOCK_PIN_KEY);
+  if (!storedHash) { el.lockScreen.hidden = true; sessionStorage.removeItem(LOCK_STATE_KEY); return; }
+
+  const inputHash = await hashPin(pin);
+  if (inputHash === storedHash) {
+    el.lockScreen.hidden = true;
+    sessionStorage.removeItem(LOCK_STATE_KEY);
+    el.lockError.hidden = true;
+    el.lockPinInput.value = "";
+  } else {
+    el.lockError.hidden = false;
+    el.lockPinInput.value = "";
+    el.lockPinInput.focus();
+  }
+}
+
+function openSetPinModal() {
+  el.setPinModal.hidden = false;
+  el.newPinInput.value = "";
+  el.confirmPinInput.value = "";
+  el.setPinError.hidden = true;
+  el.clearPinBtn.style.display = hasPin() ? "" : "none";
+  requestAnimationFrame(() => el.newPinInput.focus());
+}
+
+function closeSetPinModal() {
+  el.setPinModal.hidden = true;
+}
+
+async function savePin() {
+  const pin = el.newPinInput.value.trim();
+  const confirm = el.confirmPinInput.value.trim();
+
+  if (pin.length < 4) {
+    el.setPinError.textContent = "PIN must be at least 4 digits.";
+    el.setPinError.hidden = false;
+    return;
+  }
+  if (pin !== confirm) {
+    el.setPinError.textContent = "PINs do not match.";
+    el.setPinError.hidden = false;
+    return;
+  }
+
+  const hash = await hashPin(pin);
+  localStorage.setItem(LOCK_PIN_KEY, hash);
+  closeSetPinModal();
+  lockScreen();
+}
+
+function clearPin() {
+  localStorage.removeItem(LOCK_PIN_KEY);
+  closeSetPinModal();
+}
+
+el.lockBtn.addEventListener("click", lockScreen);
+el.lockUnlockBtn.addEventListener("click", tryUnlock);
+el.lockPinInput.addEventListener("keydown", e => { if (e.key === "Enter") tryUnlock(); });
+el.lockSetPinBtn.addEventListener("click", () => { el.lockScreen.hidden = true; openSetPinModal(); });
+el.setPinClose.addEventListener("click", closeSetPinModal);
+el.setPinCancelBtn.addEventListener("click", closeSetPinModal);
+el.setPinSaveBtn.addEventListener("click", savePin);
+el.clearPinBtn.addEventListener("click", clearPin);
+
+// Restore lock state after page refresh
+if (sessionStorage.getItem(LOCK_STATE_KEY)) lockScreen();
 
 // ─── Boot ─────────────────────────────────────────────────
 load();

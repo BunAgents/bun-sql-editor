@@ -112,6 +112,12 @@
 
         <!-- Sidebar footer -->
         <div class="sidebar-footer">
+          <button class="icon-btn" id="lockBtn" aria-label="Lock screen" title="Lock screen (Ctrl+L)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </button>
           <button class="icon-btn" id="themeBtn" aria-label="Toggle theme" title="Toggle theme">
             <svg class="theme-icon-dark" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <circle cx="12" cy="12" r="5"/>
@@ -398,6 +404,64 @@
           <div class="modal-ft-right">
             <button class="btn btn-ghost" id="ddlCancelBtn">Cancel</button>
             <button class="btn btn-primary" id="ddlGenerateBtn">Create</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lock Screen -->
+    <div class="lock-screen" id="lockScreen" hidden aria-modal="true" role="dialog" aria-labelledby="lockTitle">
+      <div class="lock-box">
+        <div class="lock-icon" aria-hidden="true">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <h2 class="lock-title" id="lockTitle">Screen Locked</h2>
+        <p class="lock-sub" id="lockSub">Enter your PIN to unlock</p>
+        <div class="lock-pin-row" id="lockPinRow">
+          <input class="lock-pin-input" id="lockPinInput" type="password" inputmode="numeric" maxlength="8"
+            placeholder="PIN" autocomplete="current-password" aria-label="PIN" />
+          <button class="lock-pin-btn" id="lockUnlockBtn" aria-label="Unlock">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+        <p class="lock-error" id="lockError" hidden>Incorrect PIN. Try again.</p>
+        <p class="lock-hint" id="lockSetupHint" hidden>No PIN set — <button class="lock-link" id="lockSetPinBtn">set a PIN now</button></p>
+      </div>
+    </div>
+
+    <!-- Set PIN Modal -->
+    <div class="modal-backdrop" id="setPinModal" role="dialog" aria-modal="true" aria-labelledby="setPinTitle" hidden>
+      <div class="modal modal--sm">
+        <div class="modal-hd">
+          <h2 class="modal-title" id="setPinTitle">Set Lock PIN</h2>
+          <button class="icon-btn" id="setPinClose" aria-label="Close">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-form-area" style="padding:1.25rem">
+          <p style="font-size:13px;color:var(--text-2);margin-bottom:1rem">Set a PIN to lock the screen. You'll need it to unlock.</p>
+          <div class="form-field" style="margin-bottom:0.75rem">
+            <label for="newPinInput">New PIN (4–8 digits)</label>
+            <input id="newPinInput" type="password" inputmode="numeric" maxlength="8" placeholder="••••" autocomplete="new-password" />
+          </div>
+          <div class="form-field">
+            <label for="confirmPinInput">Confirm PIN</label>
+            <input id="confirmPinInput" type="password" inputmode="numeric" maxlength="8" placeholder="••••" autocomplete="new-password" />
+          </div>
+          <p class="lock-error" id="setPinError" hidden></p>
+        </div>
+        <div class="modal-ft">
+          <button class="btn btn-danger" id="clearPinBtn">Remove PIN</button>
+          <div class="modal-ft-right">
+            <button class="btn btn-ghost" id="setPinCancelBtn">Cancel</button>
+            <button class="btn btn-primary" id="setPinSaveBtn">Save PIN</button>
           </div>
         </div>
       </div>
