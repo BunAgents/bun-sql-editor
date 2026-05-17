@@ -168,6 +168,20 @@
           <span class="toolbar-db-label" id="toolbarDbLabel"></span>
           <div class="toolbar-spacer"></div>
           <div class="toolbar-actions">
+            <button class="btn btn-ghost" id="formatBtn" title="Format SQL (Ctrl+Shift+F)">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/>
+                <line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/>
+              </svg>
+              Format
+            </button>
+            <button class="btn btn-ghost" id="historyBtn" title="Query history">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4"/>
+                <polyline points="3 16 3 11 8 11"/>
+              </svg>
+              History
+            </button>
             <button class="btn btn-ghost" id="explainBtn" title="Explain query">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -362,6 +376,9 @@
       <button class="ctx-item" id="ctxEditTable">Edit Table…</button>
       <button class="ctx-item" id="ctxDropTable">Drop Table…</button>
       <button class="ctx-item" id="ctxTruncate">Truncate Table…</button>
+      <div class="ctx-sep" id="ctxMaintSep"></div>
+      <button class="ctx-item" id="ctxVacuum">Vacuum Analyze</button>
+      <button class="ctx-item" id="ctxReindex">Reindex Table</button>
     </div>
 
     <!-- DDL Modal -->
@@ -384,6 +401,25 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Query History panel -->
+    <div class="qhist-panel" id="qhistPanel" hidden>
+      <div class="qhist-hd">
+        <span class="qhist-title">Query History</span>
+        <button class="icon-btn" id="qhistClear" title="Clear history">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="qhistClose" title="Close">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="qhist-list" id="qhistList"></div>
     </div>
 
     <script>

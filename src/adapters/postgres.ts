@@ -98,6 +98,27 @@ export async function schemaPostgres(
         CASE WHEN schemaname IN ('pg_catalog','information_schema','pg_toast') THEN 1 ELSE 0 END,
         schemaname, indexname
     `);
+    const matviews = await client.query(`
+      SELECT schemaname AS schema, matviewname AS name
+      FROM pg_matviews
+      ORDER BY
+        CASE WHEN schemaname IN ('pg_catalog','information_schema','pg_toast') THEN 1 ELSE 0 END,
+        schemaname, matviewname
+    `);
+    const sequences = await client.query(`
+      SELECT sequence_schema AS schema, sequence_name AS name
+      FROM information_schema.sequences
+      ORDER BY
+        CASE WHEN sequence_schema IN ('pg_catalog','information_schema','pg_toast') THEN 1 ELSE 0 END,
+        sequence_schema, sequence_name
+    `);
+    const triggers = await client.query(`
+      SELECT trigger_schema AS schema, trigger_name AS name
+      FROM information_schema.triggers
+      WHERE trigger_schema NOT IN ('pg_catalog','information_schema','pg_toast')
+      GROUP BY trigger_schema, trigger_name
+      ORDER BY trigger_schema, trigger_name
+    `);
 
     const items: SchemaResult["items"] = [];
     const schemas = new Set<string>();
@@ -109,10 +130,13 @@ export async function schemaPostgres(
     // Register all schemas first so empty schemas still appear
     for (const r of allSchemas.rows) ensureSchema(String(r.name));
 
-    for (const r of tables.rows)  { ensureSchema(String(r.schema)); items.push({ name: String(r.name), type: "table",    parent: String(r.schema) }); }
-    for (const r of views.rows)   { ensureSchema(String(r.schema)); items.push({ name: String(r.name), type: "view",     parent: String(r.schema) }); }
-    for (const r of funcs.rows)   { ensureSchema(String(r.schema)); items.push({ name: String(r.name), type: "function", parent: String(r.schema) }); }
-    for (const r of indexes.rows) { ensureSchema(String(r.schema)); items.push({ name: String(r.name), type: "index",    parent: String(r.schema) }); }
+    for (const r of tables.rows)   { ensureSchema(String(r.schema)); items.push({ name: String(r.name), type: "table",    parent: String(r.schema) }); }
+    for (const r of views.rows)    { ensureSchema(String(r.schema)); items.push({ name: String(r.name), type: "view",     parent: String(r.schema) }); }
+    for (const r of matviews.rows) { ensureSchema(String(r.schema)); items.push({ name: String(r.name), type: "matview",  parent: String(r.schema) }); }
+    for (const r of funcs.rows)    { ensureSchema(String(r.schema)); items.push({ name: String(r.name), type: "function", parent: String(r.schema) }); }
+    for (const r of sequences.rows){ ensureSchema(String(r.schema)); items.push({ name: String(r.name), type: "sequence", parent: String(r.schema) }); }
+    for (const r of triggers.rows) { ensureSchema(String(r.schema)); items.push({ name: String(r.name), type: "trigger",  parent: String(r.schema) }); }
+    for (const r of indexes.rows)  { ensureSchema(String(r.schema)); items.push({ name: String(r.name), type: "index",    parent: String(r.schema) }); }
 
     return { items, elapsedMs: performance.now() - started };
   } finally {

@@ -1,4 +1,4 @@
-const CACHE = "queryforge-v14";
+const CACHE = "queryforge-v15";
 const SHELL = ["/manifest.webmanifest", "/icon.svg"];
 
 self.addEventListener("install", (e) => {

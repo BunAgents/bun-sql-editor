@@ -60,6 +60,16 @@ const el = {
   ctxEditTable:    document.getElementById("ctxEditTable"),
   ctxDropTable:    document.getElementById("ctxDropTable"),
   ctxTruncate:     document.getElementById("ctxTruncate"),
+  ctxMaintSep:     document.getElementById("ctxMaintSep"),
+  ctxVacuum:       document.getElementById("ctxVacuum"),
+  ctxReindex:      document.getElementById("ctxReindex"),
+  // Query history
+  qhistPanel:      document.getElementById("qhistPanel"),
+  qhistList:       document.getElementById("qhistList"),
+  qhistClear:      document.getElementById("qhistClear"),
+  qhistClose:      document.getElementById("qhistClose"),
+  historyBtn:      document.getElementById("historyBtn"),
+  formatBtn:       document.getElementById("formatBtn"),
   // DDL modal
   ddlModal:        document.getElementById("ddlModal"),
   ddlModalTitle:   document.getElementById("ddlModalTitle"),
@@ -106,9 +116,11 @@ const S = {
   columnCache:   new Map(), // "schema.table" -> ColumnInfo[] | "loading" | "error"
   lastColumns:   [],
   lastRows:      [],
+  lastQueryMeta: null,  // { table, schema } for inline editing
   sortCol:       null,
   sortDir:       "asc",
   sidebarOpen:   true,
+  queryHistory:  [],    // [{ sql, connName, ts, elapsedMs, rowCount }] max 200
 };
 
 // ─── Persistence ──────────────────────────────────────────
@@ -118,6 +130,7 @@ function save() {
   localStorage.setItem("qf_tabs",  JSON.stringify({ tabs: tabsToSave, activeTabId: S.activeTabId }));
   localStorage.setItem("qf_conns", JSON.stringify(S.connections));
   localStorage.setItem("qf_theme", document.documentElement.dataset.theme ?? "dark");
+  localStorage.setItem("qf_hist",  JSON.stringify(S.queryHistory.slice(0, 200)));
 }
 
 function load() {
@@ -138,6 +151,9 @@ function load() {
   } catch {}
 
   if (!S.tabs.length) createTab(false);
+
+  // Query history
+  try { S.queryHistory = JSON.parse(localStorage.getItem("qf_hist") || "[]"); } catch {}
 
   // Sidebar state
   const sidebarPref = localStorage.getItem("qf_sidebar");
@@ -354,8 +370,8 @@ function activateConn(id) {
 }
 
 // ─── Schema Tree ───────────────────────────────────────────
-const OBJECT_ORDER = ["table", "view", "function", "index", "collection"];
-const OBJECT_LABELS = { table: "Tables", view: "Views", function: "Functions", index: "Indexes", collection: "Collections" };
+const OBJECT_ORDER = ["table", "view", "matview", "function", "sequence", "trigger", "index", "collection"];
+const OBJECT_LABELS = { table: "Tables", view: "Views", matview: "Mat. Views", function: "Functions", sequence: "Sequences", trigger: "Triggers", index: "Indexes", collection: "Collections" };
 const SYSTEM_SCHEMAS = new Set(["pg_catalog", "information_schema", "pg_toast"]);
 
 function renderSchemaTree() {
@@ -572,9 +588,24 @@ const NODE_ICONS = {
     svgEl("path",{d:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"}),
     svgEl("circle",{cx:"12",cy:"12",r:"3"}),
   ]),
+  matview: () => makeSvgIcon("12","12",[
+    svgEl("path",{d:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"}),
+    svgEl("circle",{cx:"12",cy:"12",r:"3"}),
+    svgEl("line",{x1:"20",y1:"4",x2:"20",y2:"8"}),
+    svgEl("line",{x1:"18",y1:"6",x2:"22",y2:"6"}),
+  ]),
   function: () => makeSvgIcon("12","12",[
     svgEl("polyline",{points:"4 17 10 11 4 5"}),
     svgEl("line",{x1:"12",y1:"19",x2:"20",y2:"19"}),
+  ]),
+  sequence: () => makeSvgIcon("12","12",[
+    svgEl("line",{x1:"4",y1:"6",x2:"20",y2:"6"}),
+    svgEl("line",{x1:"4",y1:"12",x2:"20",y2:"12"}),
+    svgEl("line",{x1:"4",y1:"18",x2:"20",y2:"18"}),
+    svgEl("polyline",{points:"16 2 20 6 16 10"}),
+  ]),
+  trigger: () => makeSvgIcon("12","12",[
+    svgEl("polygon",{points:"13 2 3 14 12 14 11 22 21 10 12 10 13 2"}),
   ]),
   index: () => makeSvgIcon("12","12",[
     svgEl("line",{x1:"4",y1:"9",x2:"20",y2:"9"}),
@@ -628,7 +659,7 @@ function makeTableNode(item) {
   if (item.type !== "table" && item.type !== "collection") {
     const typeBadge = document.createElement("span");
     typeBadge.className = "tree-node-type-badge";
-    const BADGE = { view: "V", function: "fn", index: "idx" };
+    const BADGE = { view: "V", matview: "MV", function: "fn", index: "idx", sequence: "seq", trigger: "trg" };
     typeBadge.textContent = BADGE[item.type] ?? item.type[0];
     btn.appendChild(typeBadge);
   }
@@ -769,11 +800,16 @@ function makeQueryTemplate(item) {
 
   switch (item.type) {
     case "view":
+    case "matview":
       return `SELECT *\nFROM ${ref}\nLIMIT 100;`;
     case "function":
       return `-- function: ${ref}\nSELECT ${ref}();`;
     case "index":
       return `SELECT indexname, indexdef\nFROM pg_indexes\nWHERE schemaname = '${item.parent}'\n  AND indexname = '${item.name}';`;
+    case "sequence":
+      return `SELECT * FROM ${ref};`;
+    case "trigger":
+      return `SELECT trigger_name, event_manipulation, event_object_table, action_statement\nFROM information_schema.triggers\nWHERE trigger_schema = '${item.parent}'\n  AND trigger_name = '${item.name}';`;
     default:
       return item.parent
         ? `SELECT *\nFROM ${ref}\nLIMIT 100;`
@@ -816,6 +852,16 @@ async function runQuery() {
     S.sortCol     = null;
     S.sortDir     = "asc";
 
+    // Detect table for inline editing: simple SELECT * FROM <table>
+    const fromMatch = query.match(/^\s*SELECT\s+[\s\S]*?\bFROM\s+"?(\w+)"?\."?(\w+)"?\s*(?:LIMIT|ORDER|WHERE|$)/i)
+                   || query.match(/^\s*SELECT\s+[\s\S]*?\bFROM\s+"?(\w+)"?\s*(?:LIMIT|ORDER|WHERE|$)/i);
+    S.lastQueryMeta = fromMatch
+      ? { schema: fromMatch[2] ? fromMatch[1] : null, table: fromMatch[2] ?? fromMatch[1] }
+      : null;
+
+    // Save to query history
+    historyPush(query, conn.name, data.elapsedMs, data.rowCount);
+
     renderResultTable(data.columns, data.rows);
     el.resultsCount.textContent = `${data.rowCount} rows`;
     el.resultsCount.hidden = false;
@@ -830,7 +876,10 @@ async function runQuery() {
     el.resultsTime.hidden  = true;
     el.copyJsonBtn.hidden  = true;
     el.exportCsvBtn.hidden = true;
-    setStatus("error", `Error: ${err.message}`);
+    const hint = /relation.*does not exist/i.test(err.message)
+      ? " (tip: use double quotes for case-sensitive names, e.g. \"Schema\".\"Table\")"
+      : "";
+    setStatus("error", `Error: ${err.message}${hint}`);
   }
 }
 
@@ -972,7 +1021,8 @@ function buildTable(cols, rows) {
 
   // tbody
   const tbody = document.createElement("tbody");
-  for (const row of rows) {
+  for (let ri = 0; ri < rows.length; ri++) {
+    const row = rows[ri];
     const tr = document.createElement("tr");
     for (const col of cols) {
       const td = document.createElement("td");
@@ -991,6 +1041,8 @@ function buildTable(cols, rows) {
       } else {
         td.textContent = String(val);
       }
+      // Double-click to inline edit
+      td.addEventListener("dblclick", () => enableInlineEdit(td, ri, col));
       tr.appendChild(td);
     }
     tbody.appendChild(tr);
@@ -2400,21 +2452,216 @@ function generateAlterSql() {
 }
 
 
+// ─── Query History ─────────────────────────────────────────
+function historyPush(sql, connName, elapsedMs, rowCount) {
+  S.queryHistory.unshift({ sql: sql.trim(), connName, ts: Date.now(), elapsedMs: Math.round(elapsedMs), rowCount });
+  if (S.queryHistory.length > 200) S.queryHistory.length = 200;
+  save();
+}
+
+function renderQueryHistory() {
+  el.qhistList.textContent = "";
+  if (!S.queryHistory.length) {
+    const empty = document.createElement("div");
+    empty.className = "qhist-empty";
+    empty.textContent = "No queries yet.";
+    el.qhistList.appendChild(empty);
+    return;
+  }
+  for (const entry of S.queryHistory) {
+    const item = document.createElement("div");
+    item.className = "qhist-item";
+
+    const meta = document.createElement("div");
+    meta.className = "qhist-meta";
+    const date = new Date(entry.ts);
+    meta.textContent = `${date.toLocaleTimeString()} · ${entry.connName} · ${entry.rowCount} rows · ${entry.elapsedMs}ms`;
+
+    const sql = document.createElement("div");
+    sql.className = "qhist-sql";
+    sql.textContent = entry.sql.length > 120 ? entry.sql.slice(0, 120) + "…" : entry.sql;
+
+    item.appendChild(meta);
+    item.appendChild(sql);
+    item.addEventListener("click", () => {
+      el.editor.value = entry.sql;
+      flushTabContent();
+      save();
+      updateGutter();
+      updateHighlight();
+      el.qhistPanel.hidden = true;
+      el.editor.focus();
+    });
+    el.qhistList.appendChild(item);
+  }
+}
+
+function toggleHistory() {
+  const hidden = el.qhistPanel.hidden;
+  el.qhistPanel.hidden = !hidden;
+  if (!hidden) return;
+  renderQueryHistory();
+}
+
+// ─── SQL Formatter ─────────────────────────────────────────
+function formatSql() {
+  const sql = el.editor.value;
+  if (!sql.trim()) return;
+  const formatted = sqlFormat(sql);
+  el.editor.value = formatted;
+  flushTabContent();
+  save();
+  updateGutter();
+  updateHighlight();
+}
+
+function sqlFormat(sql) {
+  const CLAUSE_KW = /^(SELECT|FROM|WHERE|JOIN|LEFT\s+JOIN|RIGHT\s+JOIN|INNER\s+JOIN|FULL\s+JOIN|CROSS\s+JOIN|ON|AND|OR|ORDER\s+BY|GROUP\s+BY|HAVING|LIMIT|OFFSET|UNION|UNION\s+ALL|INSERT\s+INTO|VALUES|UPDATE|SET|DELETE\s+FROM|CREATE\s+TABLE|ALTER\s+TABLE|DROP\s+TABLE|WITH|RETURNING)$/i;
+  // Tokenize respecting strings and comments
+  const parts = [];
+  let i = 0;
+  while (i < sql.length) {
+    if (sql[i] === "'" || sql[i] === '"' || sql[i] === '`') {
+      const q = sql[i]; let j = i + 1;
+      while (j < sql.length && sql[j] !== q) { if (sql[j] === '\\') j++; j++; }
+      parts.push({ s: sql.slice(i, j + 1), raw: true }); i = j + 1; continue;
+    }
+    if (sql[i] === '-' && sql[i+1] === '-') {
+      const end = sql.indexOf('\n', i);
+      parts.push({ s: end === -1 ? sql.slice(i) : sql.slice(i, end + 1), raw: true });
+      i = end === -1 ? sql.length : end + 1; continue;
+    }
+    if (sql[i] === '/' && sql[i+1] === '*') {
+      const end = sql.indexOf('*/', i + 2);
+      parts.push({ s: end === -1 ? sql.slice(i) : sql.slice(i, end + 2), raw: true });
+      i = end === -1 ? sql.length : end + 2; continue;
+    }
+    // Split on whitespace and commas
+    if (/\s/.test(sql[i])) { parts.push({ s: ' ', raw: false }); while (i < sql.length && /\s/.test(sql[i])) i++; continue; }
+    if (sql[i] === ',') { parts.push({ s: ',', raw: false }); i++; continue; }
+    if (sql[i] === ';') { parts.push({ s: ';', raw: false }); i++; continue; }
+    let j = i;
+    while (j < sql.length && !/[\s,'";`]/.test(sql[j])) j++;
+    parts.push({ s: sql.slice(i, j), raw: false }); i = j;
+  }
+
+  let out = '', indent = 0, col = 0;
+  const emit = (s) => { out += s; col += s.length; };
+  const nl = (extra = 0) => { out += '\n' + '  '.repeat(indent + extra); col = (indent + extra) * 2; };
+
+  for (let k = 0; k < parts.length; k++) {
+    const p = parts[k];
+    if (p.s === ' ') continue;
+    if (p.raw) { emit(p.s); continue; }
+    if (p.s === ',') { out = out.trimEnd(); emit(','); nl(); continue; }
+    if (p.s === ';') { out = out.trimEnd(); emit(';\n'); nl(); continue; }
+    if (p.s === '(') { emit('('); indent++; continue; }
+    if (p.s === ')') { indent = Math.max(0, indent - 1); out = out.trimEnd(); emit(')'); continue; }
+    const upper = p.s.toUpperCase();
+    // Check multi-word clauses
+    let matched = '';
+    for (const mw of ['ORDER BY','GROUP BY','LEFT JOIN','RIGHT JOIN','INNER JOIN','FULL JOIN','CROSS JOIN','INSERT INTO','DELETE FROM','UNION ALL']) {
+      const words = mw.split(' ');
+      if (upper === words[0] && parts[k+1]?.s?.toUpperCase() === words[1]) {
+        matched = mw; k++; break;
+      }
+    }
+    const token = matched || upper;
+    if (CLAUSE_KW.test(token)) {
+      if (out.trim()) nl();
+      emit(token.toUpperCase());
+      emit(' ');
+    } else {
+      emit(p.s);
+      emit(' ');
+    }
+  }
+  return out.trim().replace(/ +\n/g, '\n').replace(/\n{3,}/g, '\n\n');
+}
+
+// ─── Inline cell editing in result grid ─────────────────────
+function enableInlineEdit(td, rowIdx, colName) {
+  if (td.dataset.editing) return;
+  td.dataset.editing = "1";
+  const orig = S.lastRows[rowIdx]?.[colName];
+  const origText = orig == null ? "" : String(orig);
+  const inp = document.createElement("input");
+  inp.className = "result-inline-inp";
+  inp.value = origText;
+  td.textContent = "";
+  td.appendChild(inp);
+  inp.focus();
+  inp.select();
+
+  const commit = async () => {
+    const newVal = inp.value;
+    delete td.dataset.editing;
+    if (newVal === origText) { renderResultTable(S.lastColumns, S.lastRows); return; }
+
+    const meta = S.lastQueryMeta;
+    if (!meta?.table) {
+      td.textContent = origText || "NULL";
+      alert("Cannot edit: query must be a simple SELECT from a single table.");
+      return;
+    }
+    // Detect PK columns
+    const pkCols = S.columnCache.get(`${meta.schema ?? "public"}.${meta.table}`);
+    if (!pkCols || pkCols === "loading" || pkCols === "error") {
+      td.textContent = origText || "NULL";
+      alert("Cannot edit: column metadata not loaded yet. Expand the table in sidebar first.");
+      return;
+    }
+    const pkCol = pkCols.find(c => c.isPrimary);
+    if (!pkCol) { td.textContent = origText || "NULL"; alert("Cannot edit: no primary key found."); return; }
+    const pkVal = S.lastRows[rowIdx]?.[pkCol.name];
+    if (pkVal == null) { td.textContent = origText || "NULL"; alert("Cannot edit: PK value is null."); return; }
+
+    const schemaRef = meta.schema ? `"${meta.schema}".` : "";
+    const valLit = newVal === "" ? "NULL" : `'${newVal.replace(/'/g, "''")}'`;
+    const sql = `UPDATE ${schemaRef}"${meta.table}" SET "${colName}" = ${valLit} WHERE "${pkCol.name}" = '${String(pkVal).replace(/'/g, "''")}';`;
+
+    try {
+      const conn = activeConn();
+      const res = await fetch("/api/query", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ type: conn.type, connection: buildConnPayload(), query: sql }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Update failed");
+      S.lastRows[rowIdx][colName] = newVal === "" ? null : newVal;
+      setStatus("ok", `Updated ${meta.table}.${colName}`);
+    } catch (e) {
+      setStatus("error", `Update failed: ${e.message}`);
+    }
+    renderResultTable(S.lastColumns, S.lastRows);
+  };
+
+  inp.addEventListener("blur", commit);
+  inp.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); inp.blur(); }
+    if (e.key === "Escape") { delete td.dataset.editing; inp.removeEventListener("blur", commit); renderResultTable(S.lastColumns, S.lastRows); }
+  });
+}
+
 // ─── Context Menu ──────────────────────────────────────────
 function showCtxMenu(x, y, target) {
   _ctxTarget = target;
   const isSchema = target.type === "schema";
-  const isTable = target.type === "table";
+  const isTable  = target.type === "table";
   el.ctxNewTable.textContent = isSchema ? `New Table in "${target.item.name}"` : "New Table here";
-  el.ctxOpenErd.hidden = !isSchema;
+  el.ctxOpenErd.hidden    = !isSchema;
   el.ctxDropSchema.hidden = !isSchema;
-  el.ctxEditTable.hidden = !isTable;
-  el.ctxDropTable.hidden = isSchema;
-  el.ctxTruncate.hidden = isSchema;
+  el.ctxEditTable.hidden  = !isTable;
+  el.ctxDropTable.hidden  = isSchema;
+  el.ctxTruncate.hidden   = isSchema;
+  el.ctxMaintSep.hidden   = !isTable;
+  el.ctxVacuum.hidden     = !isTable;
+  el.ctxReindex.hidden    = !isTable;
 
   el.ctxMenu.hidden = false;
-  const mx = Math.min(x, window.innerWidth - 200);
-  const my = Math.min(y, window.innerHeight - 120);
+  const mx = Math.min(x, window.innerWidth - 220);
+  const my = Math.min(y, window.innerHeight - 180);
   el.ctxMenu.style.left = `${mx}px`;
   el.ctxMenu.style.top  = `${my}px`;
 }
@@ -2518,6 +2765,22 @@ el.ctxTruncate.addEventListener("click", async () => {
   await executeDdl(`TRUNCATE TABLE ${ref}`);
 });
 
+el.ctxVacuum.addEventListener("click", async () => {
+  const item = _ctxTarget?.item;
+  if (!item) return;
+  hideCtxMenu();
+  const ref = item.parent ? `"${item.parent}"."${item.name}"` : `"${item.name}"`;
+  await executeDdl(`VACUUM ANALYZE ${ref}`);
+});
+
+el.ctxReindex.addEventListener("click", async () => {
+  const item = _ctxTarget?.item;
+  if (!item) return;
+  hideCtxMenu();
+  const ref = item.parent ? `"${item.parent}"."${item.name}"` : `"${item.name}"`;
+  await executeDdl(`REINDEX TABLE ${ref}`);
+});
+
 document.addEventListener("click", hideCtxMenu);
 document.addEventListener("keydown", e => { if (e.key === "Escape") hideCtxMenu(); });
 
@@ -2527,6 +2790,14 @@ el.addTabBtn.addEventListener("click", () => createTab());
 // Query toolbar
 el.runBtn.addEventListener("click", runQuery);
 el.explainBtn.addEventListener("click", runExplain);
+el.formatBtn.addEventListener("click", formatSql);
+el.historyBtn.addEventListener("click", toggleHistory);
+el.qhistClose.addEventListener("click", () => { el.qhistPanel.hidden = true; });
+el.qhistClear.addEventListener("click", () => {
+  S.queryHistory = [];
+  save();
+  renderQueryHistory();
+});
 
 // ─── Autocomplete ──────────────────────────────────────────
 const SQL_KEYWORDS = [
@@ -2547,8 +2818,8 @@ let _acIdx = -1;
 function acGetPrefix() {
   const pos = el.editor.selectionStart;
   const before = el.editor.value.slice(0, pos);
-  // Dot completion: schema.| or table.|
-  const dotMatch = before.match(/(\w+)\.(\w*)$/);
+  // Dot completion — handle both quoted ("Schema". ) and unquoted (schema.)
+  const dotMatch = before.match(/"([^"]+)"\.(\w*)$/) || before.match(/(\w+)\.(\w*)$/);
   if (dotMatch) return { prefix: dotMatch[2], context: dotMatch[1], dot: true };
   const wordMatch = before.match(/(\w+)$/);
   return wordMatch ? { prefix: wordMatch[1], context: null, dot: false } : null;
@@ -2559,9 +2830,30 @@ function acBuildCandidates(prefix, context, dot) {
   const candidates = [];
 
   if (dot && context) {
-    // After dot: show tables/objects in that schema
-    const schemaItems = S.schemaItems.filter(i => i.parent === context && i.type !== "schema");
-    for (const item of schemaItems) {
+    // Check if context is a schema name -> show tables in schema
+    const isSchema = S.schemaItems.some(i => i.type === "schema" && i.name === context);
+    if (isSchema) {
+      const sItems = S.schemaItems.filter(i => i.parent === context && i.type !== "schema");
+      for (const item of sItems) {
+        if (!p || item.name.toLowerCase().startsWith(p))
+          candidates.push({ label: item.name, kind: item.type });
+      }
+      return candidates;
+    }
+    // Context is a table name -> show columns from cache
+    for (const [key, cols] of S.columnCache) {
+      const tblName = key.split(".").pop();
+      if (tblName === context && Array.isArray(cols)) {
+        for (const col of cols) {
+          if (!p || col.name.toLowerCase().startsWith(p))
+            candidates.push({ label: col.name, kind: "column", detail: col.dataType });
+        }
+        return candidates;
+      }
+    }
+    // Fallback: schema.item lookup
+    const sItems2 = S.schemaItems.filter(i => i.parent === context && i.type !== "schema");
+    for (const item of sItems2) {
       if (!p || item.name.toLowerCase().startsWith(p))
         candidates.push({ label: item.name, kind: item.type });
     }
@@ -2570,12 +2862,28 @@ function acBuildCandidates(prefix, context, dot) {
 
   if (!p || p.length < 1) return [];
 
+  // Detect tables in current query for column autocomplete
+  const query = el.editor.value;
+  const fromRe = /(?:FROM|JOIN)\s+(?:"?(\w+)"?\.)?"?(\w+)"?(?:\s+(?:AS\s+)?(\w+))?/gi;
+  let fm;
+  while ((fm = fromRe.exec(query)) !== null) {
+    const alias = fm[3] || fm[2];
+    if (alias.toLowerCase().startsWith(p)) {
+      const cacheKey = (fm[1] || "public") + "." + fm[2];
+      const cols = S.columnCache.get(cacheKey);
+      if (Array.isArray(cols)) {
+        for (const col of cols)
+          candidates.push({ label: col.name, kind: "column", detail: col.dataType });
+      }
+    }
+  }
+
   // Schema names
   for (const item of S.schemaItems.filter(i => i.type === "schema")) {
     if (item.name.toLowerCase().startsWith(p))
       candidates.push({ label: item.name, kind: "schema" });
   }
-  // Tables/views/functions (show parent.name if ambiguous)
+  // Tables/views/functions
   const seen = new Set();
   for (const item of S.schemaItems.filter(i => i.type !== "schema")) {
     if (item.name.toLowerCase().startsWith(p) && !seen.has(item.name)) {
@@ -2589,7 +2897,7 @@ function acBuildCandidates(prefix, context, dot) {
       candidates.push({ label: kw, kind: "keyword" });
   }
 
-  return candidates.slice(0, 40);
+  return candidates.slice(0, 50);
 }
 
 function acShow(items, prefix) {
@@ -2653,10 +2961,13 @@ function acApply(idx) {
   const m = acGetPrefix();
   if (!m) { acHide(); return; }
 
-  const replaceStart = pos - (m.dot ? m.prefix.length : m.prefix.length);
-  const insert = m.dot ? item.label : item.label;
-  el.editor.value = v.slice(0, replaceStart) + insert + v.slice(pos);
-  const newPos = replaceStart + insert.length;
+  const replaceStart = pos - m.prefix.length;
+  // Only quote if identifier needs it (has uppercase or spaces)
+  const needsQuote = item.kind !== "keyword" && /[A-Z\s]/.test(item.label);
+  const quoted = needsQuote ? `"${item.label}"` : item.label;
+  // For dot-completion: only replace the part after the dot (the prefix), keep context as-is
+  el.editor.value = v.slice(0, replaceStart) + quoted + v.slice(pos);
+  const newPos = replaceStart + quoted.length;
   el.editor.selectionStart = el.editor.selectionEnd = newPos;
   updateGutter();
   updateHighlight();
@@ -2800,6 +3111,8 @@ document.addEventListener("keydown", e => {
   if ((e.ctrlKey || e.metaKey) && e.key === "t") { e.preventDefault(); createTab(); }
   if ((e.ctrlKey || e.metaKey) && e.key === "w") { e.preventDefault(); if (S.activeTabId) closeTab(S.activeTabId); }
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "N") { e.preventDefault(); openModal(); }
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "F") { e.preventDefault(); formatSql(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === "h") { e.preventDefault(); toggleHistory(); }
   if (e.key === "F5") { e.preventDefault(); loadSchema(); }
   if (e.key === "Escape" && !el.connModal.hidden) closeModal();
 });

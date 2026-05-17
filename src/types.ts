@@ -25,7 +25,7 @@ export type QueryResult = {
 
 export type SchemaItem = {
   name: string;
-  type: "schema" | "table" | "view" | "function" | "index" | "collection";
+  type: "schema" | "table" | "view" | "matview" | "function" | "sequence" | "trigger" | "index" | "collection";
   parent?: string;
   columns?: ColumnInfo[];
 };
