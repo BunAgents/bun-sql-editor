@@ -1,9 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#1a2638"/>
-      <stop offset="100%" stop-color="#0f1b2d"/>
-    </linearGradient>
     <linearGradient id="cap" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#3db8f0"/>
       <stop offset="100%" stop-color="#0072b8"/>
@@ -17,9 +13,12 @@
       <stop offset="100%" stop-color="#f5a623"/>
     </linearGradient>
   </defs>
-  <rect width="32" height="32" rx="7" fill="url(#bg)"/>
-  <rect x="6" y="13" width="20" height="12" rx="1" fill="url(#body)"/>
-  <ellipse cx="16" cy="25" rx="10" ry="2.5" fill="#082e48"/>
-  <ellipse cx="16" cy="13" rx="10" ry="2.5" fill="url(#cap)"/>
-  <path d="M18.5 4 L13 16 h4 L11 28 21 14 h-4 Z" fill="url(#bolt)"/>
+  <!-- Cylinder body -->
+  <rect x="3" y="14" width="26" height="14" rx="2" fill="url(#body)"/>
+  <!-- Bottom ellipse -->
+  <ellipse cx="16" cy="28" rx="13" ry="3.5" fill="#082e48"/>
+  <!-- Top cap ellipse -->
+  <ellipse cx="16" cy="14" rx="13" ry="3.5" fill="url(#cap)"/>
+  <!-- Lightning bolt -->
+  <path d="M19 1 L12 16 h5 L10 31 22 15 h-5 Z" fill="url(#bolt)"/>
 </svg>
