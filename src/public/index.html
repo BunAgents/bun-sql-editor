@@ -189,6 +189,9 @@
         <!-- Table editor panel (shown instead of workspace for table-editor tabs) -->
         <div class="tbl-editor-panel" id="tableEditorPanel" hidden></div>
 
+        <!-- ERD panel (shown instead of workspace for erd tabs) -->
+        <div class="erd-panel" id="erdPanel" hidden></div>
+
         <!-- Editor + Results workspace -->
         <div class="workspace" id="workspace">
 
@@ -353,6 +356,7 @@
     <!-- Context menu -->
     <div class="ctx-menu" id="ctxMenu" hidden>
       <button class="ctx-item" id="ctxNewTable">New Table here</button>
+      <button class="ctx-item" id="ctxOpenErd">Open ERD diagram</button>
       <button class="ctx-item" id="ctxDropSchema">Drop Schema…</button>
       <div class="ctx-sep"></div>
       <button class="ctx-item" id="ctxEditTable">Edit Table…</button>
@@ -382,6 +386,14 @@
       </div>
     </div>
 
+    <script>
+      // Unregister stale service workers so new JS/CSS always loads fresh
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          regs.forEach(r => r.unregister());
+        });
+      }
+    </script>
     <script src="/app.js" type="module"></script>
   </body>
 </html>

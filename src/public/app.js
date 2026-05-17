@@ -25,6 +25,7 @@ const el = {
   connPillName:    document.getElementById("connPillName"),
   connPillChange:  document.getElementById("connPillChange"),
   toolbarDbLabel:  document.getElementById("toolbarDbLabel"),
+  queryToolbar:    document.getElementById("queryToolbar"),
   explainBtn:      document.getElementById("explainBtn"),
   runBtn:          document.getElementById("runBtn"),
   // Editor
@@ -36,6 +37,7 @@ const el = {
   editorPanel:     document.getElementById("editorPanel"),
   resultsPanel:    document.getElementById("resultsPanel"),
   tableEditorPanel: document.getElementById("tableEditorPanel"),
+  erdPanel:        document.getElementById("erdPanel"),
   workspace:       document.getElementById("workspace"),
   // Results
   resultsBody:     document.getElementById("resultsBody"),
@@ -53,6 +55,7 @@ const el = {
   // Context menu
   ctxMenu:         document.getElementById("ctxMenu"),
   ctxNewTable:     document.getElementById("ctxNewTable"),
+  ctxOpenErd:      document.getElementById("ctxOpenErd"),
   ctxDropSchema:   document.getElementById("ctxDropSchema"),
   ctxEditTable:    document.getElementById("ctxEditTable"),
   ctxDropTable:    document.getElementById("ctxDropTable"),
@@ -110,7 +113,9 @@ const S = {
 
 // ─── Persistence ──────────────────────────────────────────
 function save() {
-  localStorage.setItem("qf_tabs",  JSON.stringify({ tabs: S.tabs, activeTabId: S.activeTabId }));
+  // Strip erdData before saving (can be large; re-fetched on mount)
+  const tabsToSave = S.tabs.map(t => t.kind === "erd" ? { ...t, erdData: null } : t);
+  localStorage.setItem("qf_tabs",  JSON.stringify({ tabs: tabsToSave, activeTabId: S.activeTabId }));
   localStorage.setItem("qf_conns", JSON.stringify(S.connections));
   localStorage.setItem("qf_theme", document.documentElement.dataset.theme ?? "dark");
 }
@@ -234,14 +239,15 @@ function flushTabContent() {
 function syncEditorFromTab() {
   const tab = activeTab();
   const isTblEditor = tab?.kind === "table-editor";
+  const isErd       = tab?.kind === "erd";
 
-  el.workspace.hidden = isTblEditor;
-  el.tableEditorPanel.hidden = !isTblEditor;
+  el.workspace.hidden           = isTblEditor || isErd;
+  el.tableEditorPanel.hidden    = !isTblEditor;
+  el.erdPanel.hidden            = !isErd;
+  if (el.queryToolbar) el.queryToolbar.hidden = isErd;
 
-  if (isTblEditor) {
-    mountTableEditorTab(tab);
-    return;
-  }
+  if (isTblEditor) { mountTableEditorTab(tab); return; }
+  if (isErd)       { mountErdTab(tab); return; }
 
   el.editor.value = tab?.content ?? "";
   if (tab?.connId && tab.connId !== S.activeConnId) {
@@ -267,6 +273,9 @@ function renderTabs() {
     if (tab.kind === "table-editor") {
       badge.className = "tab-badge tab-badge--tbl";
       badge.textContent = "TBL";
+    } else if (tab.kind === "erd") {
+      badge.className = "tab-badge tab-badge--erd";
+      badge.textContent = "ERD";
     } else {
       badge.className = `tab-badge ${tab.dbType ?? "postgres"}`;
       badge.textContent = DB_BADGE[tab.dbType] ?? "DB";
@@ -461,6 +470,20 @@ function makeSchemaGroup(schemaName, typeMap) {
   addTableBtn.appendChild(makeSvgIcon("11","11",[svgEl("line",{x1:"12",y1:"5",x2:"12",y2:"19"}),svgEl("line",{x1:"5",y1:"12",x2:"19",y2:"12"})]));
   addTableBtn.addEventListener("click", e => { e.stopPropagation(); openDdlModal("table", { schema: schemaName }); });
 
+  // ERD button — always visible, sits between badge and hover-actions
+  const erdBtn = document.createElement("button");
+  erdBtn.className = "tree-erd-btn";
+  erdBtn.title = "Open ERD diagram";
+  erdBtn.appendChild(makeSvgIcon("12","12",[
+    svgEl("rect",{x:"1",y:"1",width:"8",height:"6",rx:"1.5"}),
+    svgEl("rect",{x:"15",y:"1",width:"8",height:"6",rx:"1.5"}),
+    svgEl("rect",{x:"1",y:"15",width:"8",height:"6",rx:"1.5"}),
+    svgEl("line",{x1:"9",y1:"4",x2:"15",y2:"4"}),
+    svgEl("line",{x1:"5",y1:"7",x2:"5",y2:"18"}),
+    svgEl("line",{x1:"5",y1:"18",x2:"9",y2:"18"}),
+  ]));
+  erdBtn.addEventListener("click", e => { e.stopPropagation(); openErdTab(schemaName); });
+
   const moreBtn = document.createElement("button");
   moreBtn.className = "tree-hdr-btn";
   moreBtn.title = "More options";
@@ -479,6 +502,7 @@ function makeSchemaGroup(schemaName, typeMap) {
   hdr.appendChild(schemaIcon);
   hdr.appendChild(nameEl);
   hdr.appendChild(badge);
+  if (!isSystem) hdr.appendChild(erdBtn);
   hdr.appendChild(actions);
 
   // Children
@@ -1433,6 +1457,388 @@ function openTableEditor(item, context = {}) {
 
 async function openEditTableModal(item) { openTableEditor(item); }
 
+// ── ERD Tab ───────────────────────────────────────────────
+function openErdTab(schema) {
+  const existing = S.tabs.find(t => t.kind === "erd" && t.erdSchema === schema && t.connId === S.activeConnId);
+  if (existing) { switchTab(existing.id); return; }
+  flushTabContent();
+  const id = `tab-erd-${Date.now()}`;
+  S.tabs.push({
+    id,
+    kind: "erd",
+    title: `ERD: ${schema}`,
+    content: "",
+    dbType: activeConn()?.type ?? "postgres",
+    connId: S.activeConnId,
+    erdSchema: schema,
+    erdData: null,       // loaded lazily
+    erdPositions: {},    // { "table": { x, y } }
+    erdZoom: 1,
+    erdPan: { x: 0, y: 0 },
+  });
+  S.activeTabId = id;
+  save();
+  renderTabs();
+  syncEditorFromTab();
+}
+
+async function mountErdTab(tab) {
+  const panel = el.erdPanel;
+  panel.textContent = "";
+
+  // ── Toolbar ──
+  const toolbar = document.createElement("div");
+  toolbar.className = "erd-toolbar";
+
+  const title = document.createElement("span");
+  title.className = "erd-toolbar-title";
+  title.textContent = tab.erdSchema;
+
+  const fitBtn = document.createElement("button");
+  fitBtn.className = "erd-toolbar-btn";
+  fitBtn.textContent = "Fit";
+  fitBtn.addEventListener("click", () => erdFitToScreen(tab, canvas, svg));
+
+  const zoomInBtn = document.createElement("button");
+  zoomInBtn.className = "erd-toolbar-btn";
+  zoomInBtn.textContent = "+";
+  zoomInBtn.addEventListener("click", () => erdZoom(tab, canvas, svg, 0.15));
+
+  const zoomOutBtn = document.createElement("button");
+  zoomOutBtn.className = "erd-toolbar-btn";
+  zoomOutBtn.textContent = "−";
+  zoomOutBtn.addEventListener("click", () => erdZoom(tab, canvas, svg, -0.15));
+
+  const reloadBtn = document.createElement("button");
+  reloadBtn.className = "erd-toolbar-btn";
+  reloadBtn.textContent = "↺ Reload";
+  reloadBtn.addEventListener("click", async () => {
+    tab.erdData = null;
+    tab.erdPositions = {};
+    await mountErdTab(tab);
+  });
+
+  toolbar.appendChild(title);
+  toolbar.appendChild(fitBtn);
+  toolbar.appendChild(zoomInBtn);
+  toolbar.appendChild(zoomOutBtn);
+  toolbar.appendChild(reloadBtn);
+  panel.appendChild(toolbar);
+
+  // ── Canvas area ──
+  const canvasWrap = document.createElement("div");
+  canvasWrap.className = "erd-canvas-wrap";
+  panel.appendChild(canvasWrap);
+
+  // SVG for relationship lines (behind cards)
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("class", "erd-svg");
+  canvasWrap.appendChild(svg);
+
+  // Canvas div for table cards
+  const canvas = document.createElement("div");
+  canvas.className = "erd-canvas";
+  canvasWrap.appendChild(canvas);
+
+  // ── Loading state ──
+  if (!tab.erdData) {
+    const loading = document.createElement("div");
+    loading.className = "erd-loading";
+    loading.textContent = "Loading schema…";
+    canvas.appendChild(loading);
+
+    const conn = S.connections.find(c => c.id === tab.connId);
+    if (!conn) { loading.textContent = "No connection found."; return; }
+    try {
+      const res = await fetch("/api/erd", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ type: conn.type, connection: conn, schema: tab.erdSchema }),
+      });
+      tab.erdData = await res.json();
+      save();
+    } catch (e) {
+      loading.textContent = "Failed to load ERD data.";
+      return;
+    }
+    canvas.textContent = "";
+  }
+
+  const { tables, relations } = tab.erdData;
+  if (!tables.length) {
+    const empty = document.createElement("div");
+    empty.className = "erd-loading";
+    empty.textContent = "No tables found in this schema.";
+    canvas.appendChild(empty);
+    return;
+  }
+
+  // Auto-layout: grid if no saved positions
+  const CARD_W = 220, CARD_H_BASE = 38, COL_H = 24, GRID_COLS = 4, GAP = 40;
+  tables.forEach((tbl, i) => {
+    if (!tab.erdPositions[tbl.name]) {
+      const col = i % GRID_COLS;
+      const row = Math.floor(i / GRID_COLS);
+      tab.erdPositions[tbl.name] = {
+        x: 20 + col * (CARD_W + GAP),
+        y: 20 + row * (CARD_H_BASE + tbl.columns.length * COL_H + GAP),
+      };
+    }
+  });
+
+  // Build card DOM for each table
+  const cardEls = {};  // tableName → { el, colEls }
+  for (const tbl of tables) {
+    const pos = tab.erdPositions[tbl.name];
+    const card = document.createElement("div");
+    card.className = "erd-card";
+    card.style.left = pos.x + "px";
+    card.style.top  = pos.y + "px";
+    card.dataset.table = tbl.name;
+
+    const hdr = document.createElement("div");
+    hdr.className = "erd-card-hdr";
+    const hdrIcon = document.createElement("span");
+    hdrIcon.className = "erd-card-icon";
+    hdrIcon.appendChild(makeSvgIcon("11","11",[
+      svgEl("rect",{x:"3",y:"3",width:"18",height:"18",rx:"2"}),
+      svgEl("line",{x1:"3",y1:"9",x2:"21",y2:"9"}),
+      svgEl("line",{x1:"9",y1:"3",x2:"9",y2:"21"}),
+    ]));
+    const hdrName = document.createElement("span");
+    hdrName.className = "erd-card-name";
+    hdrName.textContent = tbl.name;
+    const editBtn = document.createElement("button");
+    editBtn.className = "erd-card-edit";
+    editBtn.title = "Edit table";
+    editBtn.textContent = "✎";
+    editBtn.addEventListener("click", () => openTableEditor({ name: tbl.name, type: "table", parent: tbl.schema }, { schema: tbl.schema }));
+    hdr.appendChild(hdrIcon);
+    hdr.appendChild(hdrName);
+    hdr.appendChild(editBtn);
+    card.appendChild(hdr);
+
+    const colEls = {};
+    for (const col of tbl.columns) {
+      const row = document.createElement("div");
+      row.className = "erd-card-col" + (col.isPrimary ? " erd-card-col--pk" : "");
+      row.dataset.col = col.name;
+
+      const pkBadge = document.createElement("span");
+      pkBadge.className = "erd-col-pk";
+      pkBadge.textContent = col.isPrimary ? "PK" : "";
+
+      const colName = document.createElement("span");
+      colName.className = "erd-col-name";
+      colName.textContent = col.name;
+
+      const colType = document.createElement("span");
+      colType.className = "erd-col-type";
+      colType.textContent = col.dataType;
+
+      row.appendChild(pkBadge);
+      row.appendChild(colName);
+      row.appendChild(colType);
+      card.appendChild(row);
+      colEls[col.name] = row;
+    }
+
+    canvas.appendChild(card);
+    cardEls[tbl.name] = { el: card, colEls };
+
+    // Drag logic
+    erdMakeDraggable(card, tbl.name, tab, svg, relations, cardEls, canvasWrap);
+  }
+
+  // Apply pan/zoom transform
+  erdApplyTransform(canvas, svg, tab);
+
+  // Draw all FK lines
+  erdDrawLines(svg, relations, cardEls, canvas, canvasWrap);
+
+  // Pan the canvas (middle-mouse / space+drag)
+  erdSetupPan(canvasWrap, canvas, svg, tab);
+}
+
+function erdApplyTransform(canvas, svg, tab) {
+  const t = `translate(${tab.erdPan.x}px, ${tab.erdPan.y}px) scale(${tab.erdZoom})`;
+  canvas.style.transform = t;
+  svg.style.transform = t;
+  canvas.style.transformOrigin = "0 0";
+  svg.style.transformOrigin = "0 0";
+}
+
+function erdZoom(tab, canvas, svg, delta) {
+  tab.erdZoom = Math.max(0.2, Math.min(2.5, tab.erdZoom + delta));
+  erdApplyTransform(canvas, svg, tab);
+  erdDrawLines(svg, null, null, canvas, null);
+}
+
+function erdFitToScreen(tab, canvas, svg) {
+  if (!tab.erdData?.tables.length) return;
+  const wrap = canvas.parentElement;
+  const ww = wrap.clientWidth, wh = wrap.clientHeight;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const [name, pos] of Object.entries(tab.erdPositions)) {
+    const tbl = tab.erdData.tables.find(t => t.name === name);
+    const h = 38 + (tbl?.columns.length ?? 0) * 24;
+    minX = Math.min(minX, pos.x); minY = Math.min(minY, pos.y);
+    maxX = Math.max(maxX, pos.x + 220); maxY = Math.max(maxY, pos.y + h);
+  }
+  const pw = maxX - minX + 60, ph = maxY - minY + 60;
+  tab.erdZoom = Math.min(2, Math.min(ww / pw, wh / ph));
+  tab.erdPan = { x: (ww - pw * tab.erdZoom) / 2 - minX * tab.erdZoom + 30 * tab.erdZoom, y: 20 };
+  erdApplyTransform(canvas, svg, tab);
+}
+
+function erdGetColAnchor(cardEl, colEl, canvasWrap, side) {
+  const cardRect = cardEl.getBoundingClientRect();
+  const colRect  = colEl.getBoundingClientRect();
+  const wrapRect = canvasWrap.getBoundingClientRect();
+  const y = colRect.top + colRect.height / 2 - wrapRect.top;
+  const x = side === "right"
+    ? cardRect.right  - wrapRect.left
+    : cardRect.left   - wrapRect.left;
+  return { x, y };
+}
+
+function erdDrawLines(svg, relations, cardEls, canvas, canvasWrap) {
+  // Re-read from svg's stored data if not passed
+  if (!relations) {
+    relations = svg._erdRelations;
+    cardEls   = svg._erdCardEls;
+    canvasWrap = svg._erdWrap;
+  } else {
+    svg._erdRelations = relations;
+    svg._erdCardEls   = cardEls;
+    svg._erdWrap      = canvasWrap ?? canvas.parentElement;
+  }
+  if (!relations || !cardEls) return;
+
+  svg.textContent = "";
+  const wrap = svg._erdWrap;
+
+  const defs = document.createElementNS("http://www.w3.org/2000/svg","defs");
+  const marker = document.createElementNS("http://www.w3.org/2000/svg","marker");
+  marker.setAttribute("id","erd-arrow");
+  marker.setAttribute("markerWidth","8");
+  marker.setAttribute("markerHeight","8");
+  marker.setAttribute("refX","6");
+  marker.setAttribute("refY","3");
+  marker.setAttribute("orient","auto");
+  const arrow = document.createElementNS("http://www.w3.org/2000/svg","path");
+  arrow.setAttribute("d","M0,0 L0,6 L8,3 z");
+  arrow.setAttribute("fill","#4a9eff");
+  marker.appendChild(arrow);
+  defs.appendChild(marker);
+  svg.appendChild(defs);
+
+  for (const rel of relations) {
+    const fromCard = cardEls[rel.fromTable];
+    const toCard   = cardEls[rel.toTable];
+    if (!fromCard || !toCard) continue;
+
+    const fromColEl = fromCard.colEls[rel.fromColumn];
+    const toColEl   = toCard.colEls[rel.toColumn];
+    if (!fromColEl || !toColEl) continue;
+
+    const a1 = erdGetColAnchor(fromCard.el, fromColEl, wrap, "right");
+    const a2 = erdGetColAnchor(toCard.el,   toColEl,   wrap, "left");
+
+    const cx = (a2.x - a1.x) * 0.5;
+    const d  = `M${a1.x},${a1.y} C${a1.x + cx},${a1.y} ${a2.x - cx},${a2.y} ${a2.x},${a2.y}`;
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg","path");
+    path.setAttribute("d", d);
+    path.setAttribute("class", "erd-link");
+    path.setAttribute("marker-end","url(#erd-arrow)");
+    svg.appendChild(path);
+
+    // Highlight matching columns on hover
+    path.addEventListener("mouseenter", () => {
+      fromColEl.classList.add("erd-card-col--linked");
+      toColEl.classList.add("erd-card-col--linked");
+      path.classList.add("erd-link--hover");
+    });
+    path.addEventListener("mouseleave", () => {
+      fromColEl.classList.remove("erd-card-col--linked");
+      toColEl.classList.remove("erd-card-col--linked");
+      path.classList.remove("erd-link--hover");
+    });
+  }
+}
+
+function erdMakeDraggable(card, tableName, tab, svg, relations, cardEls, canvasWrap) {
+  let startX, startY, origX, origY, dragging = false;
+
+  card.addEventListener("mousedown", e => {
+    if (e.target.closest(".erd-card-edit")) return;
+    e.preventDefault();
+    dragging = true;
+    startX = e.clientX; startY = e.clientY;
+    origX  = tab.erdPositions[tableName].x;
+    origY  = tab.erdPositions[tableName].y;
+    card.classList.add("erd-card--dragging");
+  });
+
+  document.addEventListener("mousemove", e => {
+    if (!dragging) return;
+    const dx = (e.clientX - startX) / tab.erdZoom;
+    const dy = (e.clientY - startY) / tab.erdZoom;
+    const nx = origX + dx, ny = origY + dy;
+    tab.erdPositions[tableName] = { x: nx, y: ny };
+    card.style.left = nx + "px";
+    card.style.top  = ny + "px";
+    erdDrawLines(svg, null, null, null, null);
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (!dragging) return;
+    dragging = false;
+    card.classList.remove("erd-card--dragging");
+    save();
+  });
+}
+
+function erdSetupPan(wrap, canvas, svg, tab) {
+  let panning = false, px, py;
+
+  wrap.addEventListener("mousedown", e => {
+    if (e.target !== wrap && e.target !== svg && e.target !== canvas) return;
+    panning = true;
+    px = e.clientX - tab.erdPan.x;
+    py = e.clientY - tab.erdPan.y;
+    wrap.style.cursor = "grabbing";
+  });
+
+  document.addEventListener("mousemove", e => {
+    if (!panning) return;
+    tab.erdPan = { x: e.clientX - px, y: e.clientY - py };
+    erdApplyTransform(canvas, svg, tab);
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (!panning) return;
+    panning = false;
+    wrap.style.cursor = "";
+    save();
+  });
+
+  wrap.addEventListener("wheel", e => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    const rect = wrap.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const newZoom = Math.max(0.2, Math.min(2.5, tab.erdZoom + delta));
+    tab.erdPan.x = mx - (mx - tab.erdPan.x) * (newZoom / tab.erdZoom);
+    tab.erdPan.y = my - (my - tab.erdPan.y) * (newZoom / tab.erdZoom);
+    tab.erdZoom = newZoom;
+    erdApplyTransform(canvas, svg, tab);
+    erdDrawLines(svg, null, null, null, null);
+  }, { passive: false });
+}
+
 // Called by syncEditorFromTab when active tab is a table-editor
 async function mountTableEditorTab(tab) {
   const panel = el.tableEditorPanel;
@@ -2000,6 +2406,7 @@ function showCtxMenu(x, y, target) {
   const isSchema = target.type === "schema";
   const isTable = target.type === "table";
   el.ctxNewTable.textContent = isSchema ? `New Table in "${target.item.name}"` : "New Table here";
+  el.ctxOpenErd.hidden = !isSchema;
   el.ctxDropSchema.hidden = !isSchema;
   el.ctxEditTable.hidden = !isTable;
   el.ctxDropTable.hidden = isSchema;
@@ -2067,6 +2474,12 @@ el.ctxNewTable.addEventListener("click", () => {
   const ctx = _ctxTarget?.type === "schema" ? { schema: _ctxTarget.item.name } : {};
   hideCtxMenu();
   openDdlModal("table", ctx);
+});
+el.ctxOpenErd.addEventListener("click", () => {
+  const item = _ctxTarget?.item;
+  if (!item) return;
+  hideCtxMenu();
+  openErdTab(item.name);
 });
 el.ctxDropSchema.addEventListener("click", async () => {
   const item = _ctxTarget?.item;

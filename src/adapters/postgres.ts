@@ -1,5 +1,5 @@
 import { Client } from "pg";
-import type { QueryResult, SchemaResult, TestResult, ColumnsResult } from "../types";
+import type { QueryResult, SchemaResult, TestResult, ColumnsResult, ErdResult } from "../types";
 
 function makeClient(connection: Record<string, unknown>): Client {
   return new Client({
@@ -115,6 +115,91 @@ export async function schemaPostgres(
     for (const r of indexes.rows) { ensureSchema(String(r.schema)); items.push({ name: String(r.name), type: "index",    parent: String(r.schema) }); }
 
     return { items, elapsedMs: performance.now() - started };
+  } finally {
+    await client.end();
+  }
+}
+
+export async function erdPostgres(
+  connection: Record<string, unknown>,
+  schema: string,
+): Promise<ErdResult> {
+  const client = makeClient(connection);
+  const started = performance.now();
+  await client.connect();
+  try {
+    const colsRes = await client.query(`
+      SELECT
+        c.table_name,
+        c.column_name        AS name,
+        c.data_type,
+        c.is_nullable = 'YES' AS nullable,
+        COALESCE(pk.column_name IS NOT NULL, false) AS is_primary
+      FROM information_schema.columns c
+      LEFT JOIN (
+        SELECT kcu.column_name, kcu.table_name
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+          ON tc.constraint_name = kcu.constraint_name
+         AND tc.table_schema    = kcu.table_schema
+         AND tc.table_name      = kcu.table_name
+        WHERE tc.constraint_type = 'PRIMARY KEY'
+          AND tc.table_schema = $1
+      ) pk ON pk.column_name = c.column_name AND pk.table_name = c.table_name
+      WHERE c.table_schema = $1
+        AND c.table_name IN (
+          SELECT table_name FROM information_schema.tables
+          WHERE table_schema = $1 AND table_type = 'BASE TABLE'
+        )
+      ORDER BY c.table_name, c.ordinal_position
+    `, [schema]);
+
+    const fkRes = await client.query(`
+      SELECT
+        kcu.table_schema  AS from_schema,
+        kcu.table_name    AS from_table,
+        kcu.column_name   AS from_column,
+        ccu.table_schema  AS to_schema,
+        ccu.table_name    AS to_table,
+        ccu.column_name   AS to_column,
+        rc.delete_rule    AS on_delete
+      FROM information_schema.referential_constraints rc
+      JOIN information_schema.key_column_usage kcu
+        ON kcu.constraint_name = rc.constraint_name
+       AND kcu.constraint_schema = rc.constraint_schema
+      JOIN information_schema.constraint_column_usage ccu
+        ON ccu.constraint_name = rc.unique_constraint_name
+       AND ccu.constraint_schema = rc.unique_constraint_schema
+      WHERE kcu.table_schema = $1
+      ORDER BY kcu.table_name, kcu.column_name
+    `, [schema]);
+
+    // Group columns by table
+    const tableMap = new Map<string, ErdResult["tables"][0]>();
+    for (const r of colsRes.rows) {
+      const tname = String(r.table_name);
+      if (!tableMap.has(tname)) tableMap.set(tname, { schema, name: tname, columns: [] });
+      tableMap.get(tname)!.columns.push({
+        name: String(r.name),
+        dataType: String(r.data_type),
+        nullable: Boolean(r.nullable),
+        isPrimary: Boolean(r.is_primary),
+      });
+    }
+
+    return {
+      tables: [...tableMap.values()],
+      relations: fkRes.rows.map(r => ({
+        fromSchema: String(r.from_schema),
+        fromTable:  String(r.from_table),
+        fromColumn: String(r.from_column),
+        toSchema:   String(r.to_schema),
+        toTable:    String(r.to_table),
+        toColumn:   String(r.to_column),
+        onDelete:   String(r.on_delete),
+      })),
+      elapsedMs: performance.now() - started,
+    };
   } finally {
     await client.end();
   }

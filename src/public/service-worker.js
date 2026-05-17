@@ -1,5 +1,4 @@
-const CACHE = "queryforge-v11";
-// Only cache static assets, not JS/CSS (they have cache-busting via ?v= query)
+const CACHE = "queryforge-v14";
 const SHELL = ["/manifest.webmanifest", "/icon.svg"];
 
 self.addEventListener("install", (e) => {
@@ -20,20 +19,20 @@ self.addEventListener("fetch", (e) => {
   const { request } = e;
   const url = new URL(request.url);
 
-  // API calls: network-only, no caching
+  // Never cache: API calls, JS, CSS, HTML — they have server-side cache busting
   if (url.pathname.startsWith("/api/")) return;
-  // Only cache same-origin GET requests
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
+  const ext = url.pathname.split(".").pop();
+  if (["js", "css", "html", ""].includes(ext)) return;
 
+  // Cache-first for icons/manifests only
   e.respondWith(
     caches.open(CACHE).then(async (cache) => {
       const cached = await cache.match(request);
-      const fetchPromise = fetch(request).then(res => {
-        if (res.ok) cache.put(request, res.clone());
-        return res;
-      }).catch(() => cached);
-      // Stale-while-revalidate: serve cache instantly, update in background
-      return cached ?? fetchPromise;
+      if (cached) return cached;
+      const res = await fetch(request);
+      if (res.ok) cache.put(request, res.clone());
+      return res;
     })
   );
 });

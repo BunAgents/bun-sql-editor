@@ -417,7 +417,9 @@ body {
   min-width: 16px;
   text-align: right;
   flex-shrink: 0;
+  margin-left: auto;
 }
+.tree-schema-hdr:hover .tree-schema-badge { display: none; }
 
 /* Action buttons shown on hover */
 .tree-hdr-actions {
@@ -426,7 +428,6 @@ body {
   flex-shrink: 0;
 }
 .tree-schema-hdr:hover .tree-hdr-actions { display: flex; }
-.tree-schema-hdr:hover .tree-schema-badge { display: none; }
 
 .tree-hdr-btn {
   background: transparent;
@@ -440,6 +441,24 @@ body {
   padding: 0;
 }
 .tree-hdr-btn:hover { background: var(--bg-4); color: var(--text-1); }
+
+/* ERD icon — always visible, right side of schema header */
+.tree-erd-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-3);
+  display: flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background 0.1s, color 0.1s;
+}
+.tree-erd-btn:hover {
+  background: rgba(245,160,32,0.15);
+  color: #f5a020;
+}
 
 /* Collapsible content */
 .tree-children { display: none; }
@@ -751,6 +770,7 @@ body {
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
+.query-toolbar[hidden] { display: none; }
 
 .toolbar-conn-pill {
   display: flex;
@@ -877,6 +897,7 @@ body {
   overflow: hidden;
   min-height: 0;
 }
+.workspace[hidden] { display: none; }
 
 /* ── Table Editor Panel (full-area tab) ─ */
 .tbl-editor-panel {
@@ -889,6 +910,199 @@ body {
 }
 
 .tbl-editor-panel[hidden] { display: none; }
+
+/* ─── ERD Panel ──────────────────────────────────────────── */
+.erd-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+  background: var(--bg);
+}
+.erd-panel[hidden] { display: none; }
+
+.erd-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-2);
+  flex-shrink: 0;
+}
+
+.erd-toolbar-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  margin-right: 6px;
+}
+
+.erd-toolbar-btn {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 11.5px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+.erd-toolbar-btn:hover { background: var(--bg-hover); color: var(--text); }
+
+.erd-canvas-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+  background:
+    radial-gradient(circle, var(--border) 1px, transparent 1px) 0 0 / 24px 24px;
+}
+
+.erd-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.erd-canvas {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+}
+
+/* Table card */
+.erd-card {
+  position: absolute;
+  width: 220px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  cursor: grab;
+  user-select: none;
+  transition: box-shadow 0.15s;
+  overflow: hidden;
+}
+.erd-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.35); border-color: var(--brand); }
+.erd-card--dragging { cursor: grabbing; box-shadow: 0 12px 32px rgba(0,0,0,0.5); z-index: 100; }
+
+.erd-card-hdr {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  background: linear-gradient(135deg, rgba(0,122,204,0.2), rgba(0,122,204,0.08));
+  border-bottom: 1px solid var(--border);
+}
+
+.erd-card-icon { color: var(--brand-light); flex-shrink: 0; }
+
+.erd-card-name {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.erd-card-edit {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.1s, color 0.1s;
+}
+.erd-card:hover .erd-card-edit { opacity: 1; }
+.erd-card-edit:hover { color: var(--brand-light); }
+
+/* Column rows */
+.erd-card-col {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.1s;
+}
+.erd-card-col:hover { background: var(--bg-3); }
+.erd-card-col--pk { background: rgba(0,122,204,0.06); }
+.erd-card-col--linked { background: rgba(74,158,255,0.12) !important; }
+
+.erd-col-pk {
+  font-size: 9px;
+  font-weight: 700;
+  color: #f5a020;
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.erd-col-name {
+  flex: 1;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.erd-col-type {
+  color: var(--text-3);
+  font-size: 10px;
+  flex-shrink: 0;
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* FK link lines */
+.erd-link {
+  fill: none;
+  stroke: #4a9eff;
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+  opacity: 0.6;
+  pointer-events: stroke;
+  cursor: pointer;
+  transition: opacity 0.15s, stroke-width 0.15s;
+}
+.erd-link--hover {
+  opacity: 1;
+  stroke-width: 2.5;
+  stroke-dasharray: none;
+}
+
+/* Loading / empty state */
+.erd-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+/* ERD tab badge */
+.tab-badge--erd {
+  background: rgba(245,160,32,0.18);
+  color: #f5a020;
+}
 
 /* Top bar: schema + name + apply btn */
 .tep-topbar {

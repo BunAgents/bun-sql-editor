@@ -69,3 +69,31 @@ export type TestResult = {
   message: string;
   elapsedMs: number;
 };
+
+export type FkRelation = {
+  fromSchema: string;
+  fromTable: string;
+  fromColumn: string;
+  toSchema: string;
+  toTable: string;
+  toColumn: string;
+  onDelete: string;
+};
+
+export type ErdTable = {
+  schema: string;
+  name: string;
+  columns: ColumnInfo[];
+};
+
+export type ErdRequest = {
+  type: DbType;
+  connection: Record<string, unknown>;
+  schema: string;
+};
+
+export type ErdResult = {
+  tables: ErdTable[];
+  relations: FkRelation[];
+  elapsedMs: number;
+};

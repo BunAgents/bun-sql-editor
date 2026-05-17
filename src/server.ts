@@ -1,8 +1,8 @@
-import { runPostgres, schemaPostgres, testPostgres, columnsPostgres } from "./adapters/postgres";
+import { runPostgres, schemaPostgres, testPostgres, columnsPostgres, erdPostgres } from "./adapters/postgres";
 import { runMysql, schemaMysql, testMysql, columnsMysql } from "./adapters/mysql";
 import { runMongo, schemaMongo, testMongo } from "./adapters/mongodb";
 import { runClickhouse, schemaClickhouse, testClickhouse, columnsClickhouse } from "./adapters/clickhouse";
-import type { QueryRequest, SchemaRequest, TestRequest, ColumnsRequest } from "./types";
+import type { QueryRequest, SchemaRequest, TestRequest, ColumnsRequest, ErdRequest } from "./types";
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -138,6 +138,20 @@ const server = Bun.serve({
       }
     }
 
+    if (url.pathname === "/api/erd" && req.method === "POST") {
+      try {
+        const body = (await req.json()) as ErdRequest;
+        if (body.type !== "postgres") return Response.json({ tables: [], relations: [], elapsedMs: 0 });
+        const result = await erdPostgres(body.connection, body.schema);
+        return Response.json(result);
+      } catch (error) {
+        return Response.json(
+          { error: error instanceof Error ? error.message : "Unknown error" },
+          { status: 400 },
+        );
+      }
+    }
+
     // Strip cache-busting query param for static files
     const rawPath = url.pathname === "/" ? "/index.html" : url.pathname;
     const pathname = rawPath;
@@ -154,12 +168,13 @@ const server = Bun.serve({
         });
       }
       // Strip ?v=... from path to serve actual file
-      const filePath = url.pathname === "/" ? "/index.html" : url.pathname;
+      const filePath = url.pathname === "/" ? "/index.html" : url.pathname.split("?")[0];
       const actualFile = Bun.file(`./src/public${filePath}`);
+      const noStore = filePath.endsWith(".js") || filePath.endsWith(".css");
       return new Response(actualFile, {
         headers: {
           "content-type": contentType(filePath),
-          "cache-control": "no-cache",
+          "cache-control": noStore ? "no-store" : "no-cache",
         },
       });
     }
