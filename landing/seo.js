@@ -2,7 +2,8 @@
 const SITE = {
   name: "Bun SQL Editor",
   url: "https://bun-sql-editor.pages.dev",
-  logo: "https://bun-sql-editor.pages.dev/og-image.png",
+  ogImage: "https://bun-sql-editor.pages.dev/og-image.svg",
+  logo: "https://bun-sql-editor.pages.dev/favicon.svg",
   twitter: "@BunSQLEditor",
   description: "A lightweight, open-source SQL workbench that runs as a single local binary. Connect to PostgreSQL, MySQL, MongoDB, and ClickHouse. No cloud. No signup.",
 };
@@ -46,6 +47,8 @@ export function injectSEO({
   // Basic
   meta("robots", "index, follow");
   meta("author", SITE.name);
+  meta("application-name", SITE.name);
+  meta("theme-color", "#1e1e1e");
 
   // Canonical
   link("canonical", url);
@@ -56,16 +59,19 @@ export function injectSEO({
   meta("og:title", fullTitle, true);
   meta("og:description", description || SITE.description, true);
   meta("og:url", url, true);
-  meta("og:image", SITE.logo, true);
+  meta("og:image", SITE.ogImage, true);
+  meta("og:image:type", "image/svg+xml", true);
   meta("og:image:width", "1200", true);
   meta("og:image:height", "630", true);
+  meta("og:image:alt", SITE.name, true);
 
   // Twitter Card
   meta("twitter:card", "summary_large_image");
   meta("twitter:site", SITE.twitter);
   meta("twitter:title", fullTitle);
   meta("twitter:description", description || SITE.description);
-  meta("twitter:image", SITE.logo);
+  meta("twitter:image", SITE.ogImage);
+  meta("twitter:image:alt", SITE.name);
 
   // WebSite schema (always)
   jsonldTag({
@@ -92,6 +98,7 @@ export function injectSEO({
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
       "url": SITE.url,
       "description": SITE.description,
+      "image": { "@type": "ImageObject", "url": SITE.ogImage, "width": 1200, "height": 630 },
       "license": "https://github.com/BunAgents/bun-sql-editor/blob/main/LICENSE",
       "codeRepository": "https://github.com/BunAgents/bun-sql-editor",
       "downloadUrl": "https://github.com/BunAgents/bun-sql-editor/releases"
@@ -129,8 +136,12 @@ export function injectArticleSEO(post) {
       "description": post.description,
       "datePublished": post.date,
       "dateModified": post.date,
+      "image": { "@type": "ImageObject", "url": SITE.ogImage, "width": 1200, "height": 630 },
       "author": { "@type": "Organization", "name": SITE.name, "url": SITE.url },
-      "publisher": { "@type": "Organization", "name": SITE.name, "url": SITE.url, "logo": SITE.logo },
+      "publisher": {
+        "@type": "Organization", "name": SITE.name, "url": SITE.url,
+        "logo": { "@type": "ImageObject", "url": SITE.logo }
+      },
       "mainEntityOfPage": { "@type": "WebPage", "@id": `${SITE.url}/blog/post.html?slug=${post.slug}` },
       "keywords": post.tags?.join(", ") ?? "",
       "articleSection": post.category,
