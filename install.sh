@@ -30,6 +30,22 @@ case "$OS" in
     ;;
 esac
 
+# ── Uninstall mode ────────────────────────────────────────────────────────────
+if [ "${1:-}" = "uninstall" ] || [ "${1:-}" = "remove" ]; then
+  BIN_PATH="$INSTALL_DIR/$BIN_NAME"
+  if [ ! -f "$BIN_PATH" ]; then
+    echo "$BIN_NAME is not installed at $BIN_PATH"
+    exit 0
+  fi
+  if [ -w "$INSTALL_DIR" ]; then
+    rm "$BIN_PATH"
+  else
+    sudo rm "$BIN_PATH"
+  fi
+  echo "✓ Removed: $BIN_PATH"
+  exit 0
+fi
+
 # ── Check current version ─────────────────────────────────────────────────────
 CURRENT_VERSION=""
 if command -v "$BIN_NAME" &>/dev/null; then

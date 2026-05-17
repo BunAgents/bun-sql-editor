@@ -1,18 +1,34 @@
 $ErrorActionPreference = "Stop"
 
-$Repo     = "BunAgents/bun-sql-editor"
-$BinName  = "bun-sql-editor.exe"
-$Artifact = "bun-sql-editor-windows-x64.exe"
+$Repo       = "BunAgents/bun-sql-editor"
+$BinName    = "bun-sql-editor.exe"
+$Artifact   = "bun-sql-editor-windows-x64.exe"
+$InstallDir = "$env:LOCALAPPDATA\bun-sql-editor"
+$ExistingBin = Join-Path $InstallDir $BinName
+
+# ── Uninstall mode ────────────────────────────────────────────────────────────
+if ($args -contains "uninstall" -or $args -contains "remove") {
+    if (-not (Test-Path $ExistingBin)) {
+        Write-Host "bun-sql-editor is not installed at $ExistingBin"
+        exit 0
+    }
+    Remove-Item -Force $ExistingBin
+    # Remove install dir from user PATH
+    $UserPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+    $NewPath  = ($UserPath -split ";" | Where-Object { $_ -ne $InstallDir }) -join ";"
+    [Environment]::SetEnvironmentVariable("PATH", $NewPath, "User")
+    Write-Host "Removed: $ExistingBin"
+    Write-Host "Removed $InstallDir from PATH"
+    exit 0
+}
 
 # ── Resolve install dir ───────────────────────────────────────────────────────
-$InstallDir = "$env:LOCALAPPDATA\bun-sql-editor"
 if (-not (Test-Path $InstallDir)) {
     New-Item -ItemType Directory -Path $InstallDir | Out-Null
 }
 
 # ── Check current version ─────────────────────────────────────────────────────
 $CurrentVersion = ""
-$ExistingBin = Join-Path $InstallDir $BinName
 if (Test-Path $ExistingBin) {
     try { $CurrentVersion = & $ExistingBin --version 2>$null } catch {}
 }
