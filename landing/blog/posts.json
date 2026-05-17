@@ -1,0 +1,409 @@
+[
+  {
+    "slug": "why-local",
+    "title": "Why local? The case for a binary-first SQL editor",
+    "description": "Every web-based SQL editor requires a backend proxy. We explain why that's unavoidable, why it matters for your security, and why running that proxy yourself is the right answer.",
+    "date": "2025-05-17",
+    "readTime": 5,
+    "category": "Architecture",
+    "categoryColor": "blue",
+    "tags": ["security", "architecture", "local-first", "open-source"],
+    "sections": [
+      {
+        "type": "intro",
+        "content": "When we started building Bun SQL Editor, the obvious path was a cloud-hosted web app: deploy a backend, serve a frontend, done. Users would go to a URL, log in, and connect to their databases. Simple. We didn't do that. Here's why."
+      },
+      {
+        "type": "h2",
+        "id": "browser-tcp-wall",
+        "text": "The browser TCP wall"
+      },
+      {
+        "type": "p",
+        "content": "Browsers are intentionally sandboxed. They can make HTTP requests, open WebSockets, and use WebRTC — but they cannot open arbitrary TCP connections. This is a deliberate security boundary."
+      },
+      {
+        "type": "p",
+        "content": "The problem is that every major database protocol lives on TCP:"
+      },
+      {
+        "type": "ul",
+        "items": [
+          "<strong>PostgreSQL</strong> — wire protocol over TCP port 5432",
+          "<strong>MySQL</strong> — binary protocol over TCP port 3306",
+          "<strong>MongoDB</strong> — BSON over TCP port 27017",
+          "<strong>ClickHouse</strong> — HTTP (port 8123) or native TCP (port 9000)"
+        ]
+      },
+      {
+        "type": "p",
+        "content": "ClickHouse is a partial exception because it has an HTTP interface — but even then, CORS and network topology make direct browser-to-database connections impractical in production."
+      },
+      {
+        "type": "callout",
+        "variant": "info",
+        "content": "<strong>The conclusion is unavoidable:</strong> any web-based SQL editor needs a backend proxy. There is no workaround. WebAssembly can run database engines inside the browser (PGlite does this for PostgreSQL), but those are embedded databases — they cannot connect to your existing external database server."
+      },
+      {
+        "type": "h2",
+        "id": "trust-problem",
+        "text": "The trust problem"
+      },
+      {
+        "type": "p",
+        "content": "So every web SQL editor needs a proxy. The question is: whose server is it?"
+      },
+      {
+        "type": "p",
+        "content": "For cloud-hosted tools like Retool, Metabase Cloud, or browser-based SQL editors, the answer is: <em>theirs</em>. Your credentials — host, port, username, password — travel through their infrastructure to reach your database."
+      },
+      {
+        "type": "p",
+        "content": "Even if they promise not to log credentials, you have no way to verify that. You're trusting:"
+      },
+      {
+        "type": "ul",
+        "items": [
+          "Their security practices",
+          "Their employees with database access",
+          "Their infrastructure not being breached",
+          "Their terms of service not changing"
+        ]
+      },
+      {
+        "type": "p",
+        "content": "For a database tool — something with read/write access to your production data — that's a significant trust surface."
+      },
+      {
+        "type": "h2",
+        "id": "what-we-did",
+        "text": "What we did instead"
+      },
+      {
+        "type": "p",
+        "content": "The proxy has to exist. We just made you the proxy."
+      },
+      {
+        "type": "p",
+        "content": "Bun SQL Editor is a small HTTP server that runs on your machine. Your browser connects to <code>localhost:3000</code>. The server connects to your database. Credentials go to <code>localhost</code> — never to any external server."
+      },
+      {
+        "type": "pre",
+        "content": "Browser → localhost:3000 (your machine) → Database"
+      },
+      {
+        "type": "p",
+        "content": "The server is stateless: it doesn't store credentials, doesn't log queries, doesn't have a database of its own. Every request from the browser includes the connection details, the server uses them to make the database connection, gets the result, and returns it. Then it forgets everything."
+      },
+      {
+        "type": "h2",
+        "id": "why-not-desktop",
+        "text": "Why not a desktop app?"
+      },
+      {
+        "type": "p",
+        "content": "TablePlus, DBeaver, DataGrip — these are desktop apps precisely because they need TCP access. They solve the problem the same way: run something locally."
+      },
+      {
+        "type": "p",
+        "content": "The downside of desktop apps is distribution. Code signing certificates cost $300–500/year per platform. Without signing, users get scary security warnings. With signing, you're paying for the privilege of users trusting a closed binary."
+      },
+      {
+        "type": "p",
+        "content": "We distribute as a binary too — but an open-source one. The source code is public. You can read every line, build it yourself, and verify that what runs on your machine matches what's in the repo. The security warning on first run is a one-time friction, not an ongoing trust question."
+      },
+      {
+        "type": "h2",
+        "id": "trade-offs",
+        "text": "The trade-off is real"
+      },
+      {
+        "type": "p",
+        "content": "The local binary approach has downsides:"
+      },
+      {
+        "type": "ul",
+        "items": [
+          "Users have to download and run something",
+          "No access from a device that doesn't have the binary",
+          "No team collaboration features out of the box"
+        ]
+      },
+      {
+        "type": "p",
+        "content": "For a personal database tool, we think these are the right trade-offs. Your data stays on your machine. You don't need an account. There's nothing to subscribe to."
+      },
+      {
+        "type": "callout",
+        "variant": "success",
+        "content": "If you need team access, run the binary on a shared machine inside your VPN and put an authentication proxy in front of it. You control the security boundary."
+      },
+      {
+        "type": "h2",
+        "id": "open-source-trust",
+        "text": "Open source as the trust anchor"
+      },
+      {
+        "type": "p",
+        "content": "The final piece is transparency. A closed binary — even a local one — still requires trust. We make the source code public so you don't have to take our word for it. Read <a href=\"https://github.com/BunAgents/bun-sql-editor/blob/main/app/server.ts\">app/server.ts</a>. It's a straightforward HTTP server that routes requests to database adapters. There's no telemetry, no analytics, no call home."
+      },
+      {
+        "type": "p",
+        "content": "That's the whole design: a proxy you control, with code you can read, running on a machine you own."
+      }
+    ]
+  },
+  {
+    "slug": "how-erd-works",
+    "title": "How we built ERD diagrams with vanilla JS and SVG",
+    "description": "No D3, no React, no canvas library. Just SVG bezier curves, absolutely positioned divs, and some math. Here's how the ERD feature works under the hood.",
+    "date": "2025-05-17",
+    "readTime": 4,
+    "category": "Technical",
+    "categoryColor": "green",
+    "tags": ["svg", "javascript", "erd", "frontend", "diagrams"],
+    "sections": [
+      {
+        "type": "intro",
+        "content": "The ERD (entity-relationship diagram) feature lets you visualize foreign key relationships in your database schema. You get draggable table cards, bezier curves connecting related columns, and zoom/pan — all without a single third-party UI library. Here's how it works."
+      },
+      {
+        "type": "h2",
+        "id": "two-layer",
+        "text": "The two-layer architecture"
+      },
+      {
+        "type": "p",
+        "content": "The ERD panel has two sibling layers that share the same coordinate space:"
+      },
+      {
+        "type": "ul",
+        "items": [
+          "<strong>SVG layer</strong> — full-width, full-height, pointer-events disabled. Draws the FK relationship lines.",
+          "<strong>Canvas layer</strong> — absolute positioned div. Contains the table cards as absolute-positioned child divs."
+        ]
+      },
+      {
+        "type": "p",
+        "content": "Both layers are wrapped in a container that receives the zoom/pan transform via CSS <code>transform: scale() translate()</code>. When you pan or zoom, only the transform changes — the SVG paths and card positions don't need to be recalculated."
+      },
+      {
+        "type": "h2",
+        "id": "bezier-curves",
+        "text": "Drawing the bezier curves"
+      },
+      {
+        "type": "p",
+        "content": "Each FK relationship is drawn as a cubic bezier curve in SVG. To find the start and end points, we use <code>getBoundingClientRect()</code> on the specific column row in the source and target table cards:"
+      },
+      {
+        "type": "pre",
+        "content": "function erdGetColAnchor(tableEl, colName, side) {\n  const row = tableEl.querySelector(`[data-col=\"${colName}\"]`);\n  const rect = row.getBoundingClientRect();\n  const wrapRect = erdWrap.getBoundingClientRect();\n  const x = side === \"right\" ? rect.right - wrapRect.left : rect.left - wrapRect.left;\n  const y = rect.top + rect.height / 2 - wrapRect.top;\n  return { x: x / zoom, y: y / zoom };\n}"
+      },
+      {
+        "type": "p",
+        "content": "The control points for the bezier are offset horizontally — <code>cx1 = x1 + 80</code>, <code>cx2 = x2 - 80</code>. This creates the characteristic S-curve shape. The SVG path is:"
+      },
+      {
+        "type": "pre",
+        "content": "M x1 y1 C cx1 y1, cx2 y2, x2 y2"
+      },
+      {
+        "type": "h2",
+        "id": "zoom-toward-cursor",
+        "text": "Zoom toward cursor"
+      },
+      {
+        "type": "p",
+        "content": "Zoom-toward-cursor is a common UX detail that most diagram tools get right — zooming in centers on your mouse position rather than the diagram origin. The formula:"
+      },
+      {
+        "type": "pre",
+        "content": "pan.x = mouseX - (mouseX - pan.x) * (newZoom / oldZoom);\npan.y = mouseY - (mouseY - pan.y) * (newZoom / oldZoom);"
+      },
+      {
+        "type": "p",
+        "content": "This adjusts the pan offset so the point under the cursor appears to stay fixed while the diagram scales around it."
+      },
+      {
+        "type": "h2",
+        "id": "draggable-cards",
+        "text": "Draggable cards"
+      },
+      {
+        "type": "p",
+        "content": "Each table card is made draggable with a simple <code>pointerdown</code> / <code>pointermove</code> / <code>pointerup</code> handler. Mouse coordinates from the event are in screen space, but card positions are in diagram space (before zoom/pan). So we divide the delta by the current zoom level:"
+      },
+      {
+        "type": "pre",
+        "content": "card.style.left = (startLeft + (e.clientX - startX) / zoom) + \"px\";\ncard.style.top  = (startTop  + (e.clientY - startY) / zoom) + \"px\";"
+      },
+      {
+        "type": "p",
+        "content": "After every drag move, we redraw all SVG lines — because the anchor points have moved."
+      },
+      {
+        "type": "h2",
+        "id": "css-hidden-bug",
+        "text": "The CSS hidden attribute bug"
+      },
+      {
+        "type": "callout",
+        "variant": "warning",
+        "content": "One subtle bug: <code>display: flex</code> in CSS overrides the browser's built-in <code>[hidden] { display: none }</code> rule. The SQL editor workspace remained visible even when the ERD tab was active."
+      },
+      {
+        "type": "p",
+        "content": "The fix is explicit:"
+      },
+      {
+        "type": "pre",
+        "content": ".workspace[hidden] { display: none; }"
+      },
+      {
+        "type": "h2",
+        "id": "no-libraries",
+        "text": "No libraries needed"
+      },
+      {
+        "type": "p",
+        "content": "The whole ERD feature — data fetching, layout, dragging, zooming, panning, line drawing — is about 200 lines of vanilla JS. SVG is well-suited for this: paths, markers (arrowheads), and transforms are all built-in. The browser handles the rendering."
+      },
+      {
+        "type": "p",
+        "content": "Reaching for D3 or a canvas library would have added kilobytes of dependency for functionality the browser already provides natively."
+      }
+    ]
+  },
+  {
+    "slug": "pwa-limitations",
+    "title": "Why your SQL editor can't be a pure PWA (and what we did instead)",
+    "description": "Progressive Web Apps are powerful, but they hit a hard wall when it comes to database connections. We explore the TCP limitation, why it can't be worked around, and our binary-based solution.",
+    "date": "2025-05-17",
+    "readTime": 6,
+    "category": "Deep dive",
+    "categoryColor": "yellow",
+    "tags": ["pwa", "web-platform", "tcp", "architecture", "service-worker"],
+    "sections": [
+      {
+        "type": "intro",
+        "content": "Progressive Web Apps are genuinely impressive. Service workers, Web App Manifest, OPFS, IndexedDB, background sync — modern browsers are powerful application runtimes. A lot of software that used to require native apps can now be PWAs. But not a SQL editor that connects to external databases. Here's why."
+      },
+      {
+        "type": "h2",
+        "id": "what-pwas-can-do",
+        "text": "What PWAs can do"
+      },
+      {
+        "type": "ul",
+        "items": [
+          "Install to your home screen or desktop",
+          "Work offline via service worker caching",
+          "Store data locally with IndexedDB or OPFS",
+          "Make HTTP/HTTPS requests to any server",
+          "Open WebSocket connections",
+          "Run CPU-intensive code via WebAssembly"
+        ]
+      },
+      {
+        "type": "p",
+        "content": "This is a rich platform. Many apps — note-taking, drawing tools, code editors, even IDEs — work beautifully as PWAs."
+      },
+      {
+        "type": "h2",
+        "id": "the-wall",
+        "text": "The one thing PWAs can't do"
+      },
+      {
+        "type": "p",
+        "content": "Open a raw TCP connection. That's it. That's the wall. Browsers are deliberately prevented from opening arbitrary TCP sockets. The <a href=\"https://wicg.github.io/direct-sockets/\">Direct Sockets API</a> exists as a proposal for isolated web apps, but it's not available in standard browser contexts."
+      },
+      {
+        "type": "table",
+        "headers": ["Database", "Protocol", "Browser accessible?"],
+        "rows": [
+          ["PostgreSQL", "Custom binary over TCP:5432", "✗ No"],
+          ["MySQL", "Custom binary over TCP:3306", "✗ No"],
+          ["MongoDB", "BSON over TCP:27017", "✗ No"],
+          ["ClickHouse", "HTTP:8123 or TCP:9000", "⚠ HTTP only, with CORS"],
+          ["SQLite (embedded)", "In-process (no network)", "✓ Via WASM"]
+        ]
+      },
+      {
+        "type": "h2",
+        "id": "wasm",
+        "text": "What about WebAssembly?"
+      },
+      {
+        "type": "p",
+        "content": "WebAssembly (WASM) lets you run near-native code in the browser. Projects like <a href=\"https://pglite.dev\">PGlite</a> compile PostgreSQL to WASM and run it entirely in the browser. This is remarkable engineering."
+      },
+      {
+        "type": "p",
+        "content": "But it's an <em>embedded</em> database — it runs inside the browser tab, stores data in OPFS, and has no network connectivity. You can't use it to connect to your existing PostgreSQL server."
+      },
+      {
+        "type": "h2",
+        "id": "websocket-workaround",
+        "text": "The WebSocket workaround"
+      },
+      {
+        "type": "p",
+        "content": "Some tools proxy database connections through WebSockets:"
+      },
+      {
+        "type": "pre",
+        "content": "Browser ←→ WebSocket ←→ Proxy server ←→ Database"
+      },
+      {
+        "type": "p",
+        "content": "This works, but the proxy server still has to exist somewhere. And now your credentials are flowing through a WebSocket to that proxy. You're back to the trust problem — whose server is the proxy on?"
+      },
+      {
+        "type": "h2",
+        "id": "our-approach",
+        "text": "Our approach: local binary as PWA backend"
+      },
+      {
+        "type": "p",
+        "content": "Bun SQL Editor is technically a PWA — it has a manifest, a service worker, and can be installed to your desktop. But its backend is a local binary, not a cloud server."
+      },
+      {
+        "type": "pre",
+        "content": "PWA (browser) ←→ localhost:3000 (binary) ←→ Database"
+      },
+      {
+        "type": "ul",
+        "items": [
+          "Install to desktop, native app feel (PWA)",
+          "Credentials never leave your machine (local binary)",
+          "No code signing headache (open source binary)",
+          "Works with any TCP-accessible database (direct connection)"
+        ]
+      },
+      {
+        "type": "h2",
+        "id": "friction",
+        "text": "The one friction point"
+      },
+      {
+        "type": "p",
+        "content": "The binary has to be running for queries to work. Set it to start automatically with your OS — Login Items (macOS), Task Scheduler (Windows), or systemd (Linux). Then it behaves like any other background service."
+      },
+      {
+        "type": "h2",
+        "id": "right-tradeoff",
+        "text": "Is this the right trade-off?"
+      },
+      {
+        "type": "p",
+        "content": "For developers who already run local servers (Docker, local Postgres, Redis...), running one more background process is not a meaningful burden. For a tool that needs to work on any device without setup, a pure SaaS makes more sense. But then you're trusting someone else's server with your credentials. That's the fundamental choice: convenience vs. control."
+      },
+      {
+        "type": "callout",
+        "variant": "info",
+        "content": "We chose control. The binary is open source, stateless, and runs on your machine. You can audit every line."
+      }
+    ]
+  }
+]

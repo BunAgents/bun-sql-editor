@@ -5,11 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bun SQL Editor — Local SQL Workbench for PostgreSQL, MySQL, MongoDB & ClickHouse</title>
   <meta name="description" content="A lightweight, open-source SQL workbench that runs as a single local binary. Connect to PostgreSQL, MySQL, MongoDB, and ClickHouse. No cloud. No signup. Your credentials never leave your machine." />
-  <meta property="og:title" content="Bun SQL Editor" />
-  <meta property="og:description" content="Open-source SQL workbench — runs as a local binary, zero cloud." />
-  <meta property="og:type" content="website" />
   <link rel="stylesheet" href="styles.css" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗄</text></svg>" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 </head>
 <body>
 
@@ -161,7 +158,7 @@
     </div>
 
     <p style="font-size:0.875rem;color:var(--muted-fg);text-align:center;margin-top:1rem">
-      Want the full technical explanation? <a href="blog/why-local.html">Read the blog post →</a>
+      Want the full technical explanation? <a href="blog/post.html?slug=why-local">Read the blog post →</a>
     </p>
   </div>
 </section>
@@ -268,5 +265,15 @@
   </div>
 </footer>
 
+
+<script type="module">
+import { injectSEO } from "./seo.js";
+injectSEO({
+  title: "Bun SQL Editor",
+  description: "A lightweight, open-source SQL workbench that runs as a single local binary. Connect to PostgreSQL, MySQL, MongoDB, and ClickHouse. No cloud. No signup.",
+  canonical: "/",
+  type: "website",
+});
+</script>
 </body>
 </html>

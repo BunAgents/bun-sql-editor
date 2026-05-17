@@ -6,6 +6,7 @@
   <title>Features — Bun SQL Editor</title>
   <meta name="description" content="Complete feature reference for Bun SQL Editor: schema explorer, query editor, ERD diagrams, autocomplete, inline editing, and more." />
   <link rel="stylesheet" href="../styles.css" />
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
 </head>
 <body>
 <header class="nav">
@@ -189,5 +190,14 @@
     </div>
   </div>
 </footer>
+<script type="module">
+import { injectSEO } from "../seo.js";
+injectSEO({
+  title: "Features",
+  description: "Complete feature reference for Bun SQL Editor: schema explorer, query editor, ERD diagrams, autocomplete, inline editing, and more.",
+  canonical: "/wiki/features.html",
+  breadcrumbs: [{ name:"Home", path:"/" }, { name:"Docs", path:"/wiki/index.html" }, { name:"Features", path:"/wiki/features.html" }],
+});
+</script>
 </body>
 </html>

@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loading… — Bun SQL Editor Blog</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <svg width="20" height="20" viewBox="0 0 30 30" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="nt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#45c8f5"/><stop offset="100%" stop-color="#0080cc"/></linearGradient>
+          <linearGradient id="nb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0d4a72"/><stop offset="100%" stop-color="#08304e"/></linearGradient>
+          <linearGradient id="nl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffe55a"/><stop offset="100%" stop-color="#f5a020"/></linearGradient>
+        </defs>
+        <rect x="5" y="11" width="20" height="13" rx="1" fill="url(#nb)"/>
+        <ellipse cx="15" cy="24" rx="10" ry="3" fill="#082e48"/>
+        <ellipse cx="15" cy="11" rx="10" ry="3" fill="url(#nt)"/>
+        <path d="M17.5 3 L13 13.5 h3.5 L12 27 L21 12 h-3.5 Z" fill="url(#nl)" opacity="0.96"/>
+      </svg>
+      Bun SQL Editor
+    </a>
+    <div class="nav-sep"></div>
+    <nav class="nav-links">
+      <a href="../wiki/index.html">Docs</a>
+      <a href="index.html" class="active">Blog</a>
+      <a href="https://github.com/BunAgents/bun-sql-editor/releases">Releases</a>
+    </nav>
+    <div class="nav-right">
+      <a href="https://github.com/BunAgents/bun-sql-editor" class="btn btn-ghost btn-sm">GitHub</a>
+    </div>
+  </div>
+</header>
+
+<main id="postMain" style="padding:3rem 0 5rem;min-height:60vh">
+  <div class="container-sm" id="postContent">
+    <p style="color:var(--muted-fg)">Loading…</p>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <span>© 2025 Bun SQL Editor · MIT License</span>
+    <div class="footer-links">
+      <a href="index.html">← All posts</a>
+      <a href="https://github.com/BunAgents/bun-sql-editor">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+<script type="module">
+import { injectArticleSEO } from "../seo.js";
+
+const CATEGORY_COLORS = { blue:"badge-blue", green:"badge-green", yellow:"badge-yellow", red:"badge-red" };
+const CALLOUT_ICONS = { info:"ℹ", warning:"⚠", success:"✓", danger:"✗" };
+
+// Safe text helper
+function t(str) {
+  const d = document.createElement("div");
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+// Build a DOM element from a section object — no innerHTML with untrusted data
+function buildSection(s) {
+  switch (s.type) {
+    case "intro": {
+      const p = document.createElement("p");
+      p.style.cssText = "font-size:1.05rem;color:var(--foreground);line-height:1.8;margin-bottom:1.5rem";
+      p.textContent = s.content;
+      return p;
+    }
+    case "h2": case "h3": {
+      const h = document.createElement(s.type);
+      if (s.id) h.id = s.id;
+      h.textContent = s.text;
+      return h;
+    }
+    case "p": {
+      const p = document.createElement("p");
+      // content may contain safe inline HTML (code, strong, em, a) — sanitize to allowed tags only
+      p.innerHTML = sanitizeInline(s.content);
+      return p;
+    }
+    case "ul": case "ol": {
+      const list = document.createElement(s.type);
+      s.items.forEach(item => {
+        const li = document.createElement("li");
+        li.innerHTML = sanitizeInline(item);
+        list.appendChild(li);
+      });
+      return list;
+    }
+    case "pre": {
+      const pre = document.createElement("pre");
+      const code = document.createElement("code");
+      code.textContent = s.content; // textContent — never HTML
+      pre.appendChild(code);
+      return pre;
+    }
+    case "callout": {
+      const div = document.createElement("div");
+      div.className = `callout callout-${s.variant}`;
+      const icon = document.createElement("div");
+      icon.className = "callout-icon";
+      icon.textContent = CALLOUT_ICONS[s.variant] ?? "ℹ";
+      const body = document.createElement("div");
+      body.className = "callout-body";
+      body.innerHTML = sanitizeInline(s.content);
+      div.appendChild(icon);
+      div.appendChild(body);
+      return div;
+    }
+    case "table": {
+      const wrap = document.createElement("div");
+      wrap.className = "table-wrap";
+      const table = document.createElement("table");
+      const thead = document.createElement("thead");
+      const headerRow = document.createElement("tr");
+      s.headers.forEach(h => { const th = document.createElement("th"); th.textContent = h; headerRow.appendChild(th); });
+      thead.appendChild(headerRow);
+      const tbody = document.createElement("tbody");
+      s.rows.forEach(row => {
+        const tr = document.createElement("tr");
+        row.forEach(cell => { const td = document.createElement("td"); td.textContent = cell; tr.appendChild(td); });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(thead);
+      table.appendChild(tbody);
+      wrap.appendChild(table);
+      return wrap;
+    }
+    case "hr": {
+      const hr = document.createElement("hr");
+      hr.className = "sep";
+      hr.style.margin = "2rem 0";
+      return hr;
+    }
+    default:
+      return null;
+  }
+}
+
+// Allow only safe inline tags: strong, em, code, a (href validated), br
+function sanitizeInline(html) {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  // Remove any script/style/event-handler nodes
+  tmp.querySelectorAll("script,style,[onclick],[onerror],[onload]").forEach(el => el.remove());
+  // Only allow href on <a> that point to http/https or # anchors
+  tmp.querySelectorAll("a").forEach(a => {
+    const href = a.getAttribute("href") || "";
+    if (!/^(https?:\/\/|#|\/)/.test(href)) a.removeAttribute("href");
+  });
+  return tmp.innerHTML;
+}
+
+function buildToc(sections) {
+  const headings = sections.filter(s => s.type === "h2");
+  if (headings.length < 2) return null;
+  const nav = document.createElement("nav");
+  nav.setAttribute("aria-label", "Table of contents");
+  nav.style.cssText = "background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;margin-bottom:2rem";
+  const label = document.createElement("div");
+  label.style.cssText = "font-size:0.75rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted-fg);margin-bottom:0.75rem";
+  label.textContent = "On this page";
+  const ul = document.createElement("ul");
+  ul.style.cssText = "list-style:none;padding:0;display:flex;flex-direction:column;gap:0.25rem";
+  headings.forEach(h => {
+    const li = document.createElement("li");
+    const a = document.createElement("a");
+    a.href = `#${h.id}`;
+    a.textContent = h.text;
+    a.style.cssText = "font-size:0.875rem;color:var(--muted-fg)";
+    li.appendChild(a);
+    ul.appendChild(li);
+  });
+  nav.appendChild(label);
+  nav.appendChild(ul);
+  return nav;
+}
+
+async function loadPost() {
+  const slug = new URLSearchParams(location.search).get("slug");
+  const content = document.getElementById("postContent");
+
+  if (!slug) { content.textContent = "Post not found."; return; }
+
+  let posts;
+  try {
+    const res = await fetch("posts.json");
+    posts = await res.json();
+  } catch { content.textContent = "Failed to load posts."; return; }
+
+  const post = posts.find(p => p.slug === slug);
+  if (!post) { content.textContent = "Post not found."; return; }
+
+  injectArticleSEO(post);
+  content.innerHTML = "";
+
+  // Breadcrumb
+  const breadcrumb = document.createElement("nav");
+  breadcrumb.setAttribute("aria-label", "Breadcrumb");
+  breadcrumb.style.cssText = "font-size:0.8125rem;color:var(--muted-fg);margin-bottom:1rem";
+  breadcrumb.innerHTML = `<a href="../index.html" style="color:var(--muted-fg)">Home</a><span style="margin:0 0.4rem">›</span><a href="index.html" style="color:var(--muted-fg)">Blog</a><span style="margin:0 0.4rem">›</span><span>${t(post.title)}</span>`;
+  content.appendChild(breadcrumb);
+
+  // Post header
+  const header = document.createElement("div");
+  header.className = "post-header";
+
+  const meta = document.createElement("div");
+  meta.className = "post-meta";
+
+  const catBadge = document.createElement("span");
+  catBadge.className = `badge ${CATEGORY_COLORS[post.categoryColor] || "badge-default"}`;
+  catBadge.textContent = post.category;
+  meta.appendChild(catBadge);
+
+  const dateSpan = document.createElement("span");
+  dateSpan.textContent = new Date(post.date).toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" });
+  meta.appendChild(dateSpan);
+
+  const readSpan = document.createElement("span");
+  readSpan.textContent = `${post.readTime} min read`;
+  meta.appendChild(readSpan);
+
+  header.appendChild(meta);
+
+  const h1 = document.createElement("h1");
+  h1.textContent = post.title;
+  header.appendChild(h1);
+
+  const desc = document.createElement("p");
+  desc.style.cssText = "color:var(--muted-fg);font-size:1rem;line-height:1.75;margin-top:0.75rem";
+  desc.textContent = post.description;
+  header.appendChild(desc);
+
+  if (post.tags?.length) {
+    const tags = document.createElement("div");
+    tags.style.cssText = "display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:1rem";
+    post.tags.forEach(tag => {
+      const span = document.createElement("span");
+      span.className = "badge badge-default";
+      span.textContent = tag;
+      tags.appendChild(span);
+    });
+    header.appendChild(tags);
+  }
+
+  content.appendChild(header);
+
+  // TOC
+  const toc = buildToc(post.sections);
+  if (toc) content.appendChild(toc);
+
+  // Content
+  const prose = document.createElement("div");
+  prose.className = "prose";
+  post.sections.forEach(s => {
+    const el = buildSection(s);
+    if (el) prose.appendChild(el);
+  });
+  content.appendChild(prose);
+
+  // Footer actions
+  const actions = document.createElement("div");
+  actions.style.cssText = "border-top:1px solid var(--border);margin-top:3rem;padding-top:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem";
+  actions.innerHTML = `<a href="index.html" class="btn btn-outline btn-sm">← All posts</a><a href="https://github.com/BunAgents/bun-sql-editor" class="btn btn-ghost btn-sm">Star on GitHub ⭐</a>`;
+  content.appendChild(actions);
+}
+
+loadPost();
+</script>
+</body>
+</html>
