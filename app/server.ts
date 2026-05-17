@@ -155,7 +155,7 @@ const server = Bun.serve({
     // Strip cache-busting query param for static files
     const rawPath = url.pathname === "/" ? "/index.html" : url.pathname;
     const pathname = rawPath;
-    const file = Bun.file(`./src/public${pathname}`);
+    const file = Bun.file(`./app/public${pathname}`);
 
     if (await file.exists()) {
       // Inject build version into HTML for cache busting
@@ -169,7 +169,7 @@ const server = Bun.serve({
       }
       // Strip ?v=... from path to serve actual file
       const filePath = url.pathname === "/" ? "/index.html" : url.pathname.split("?")[0];
-      const actualFile = Bun.file(`./src/public${filePath}`);
+      const actualFile = Bun.file(`./app/public${filePath}`);
       const noStore = filePath.endsWith(".js") || filePath.endsWith(".css");
       return new Response(actualFile, {
         headers: {
