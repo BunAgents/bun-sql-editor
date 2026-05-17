@@ -1,7 +1,7 @@
 import { runPostgres, schemaPostgres, testPostgres, columnsPostgres, erdPostgres } from "./adapters/postgres";
-import { runMysql, schemaMysql, testMysql, columnsMysql } from "./adapters/mysql";
-import { runMongo, schemaMongo, testMongo } from "./adapters/mongodb";
-import { runClickhouse, schemaClickhouse, testClickhouse, columnsClickhouse } from "./adapters/clickhouse";
+import { runMysql, schemaMysql, testMysql, columnsMysql, erdMysql } from "./adapters/mysql";
+import { runMongo, schemaMongo, testMongo, columnsMongo } from "./adapters/mongodb";
+import { runClickhouse, schemaClickhouse, testClickhouse, columnsClickhouse, erdClickhouse } from "./adapters/clickhouse";
 import type { QueryRequest, SchemaRequest, TestRequest, ColumnsRequest, ErdRequest } from "./types";
 
 const MIME = {
@@ -73,7 +73,22 @@ async function columnsRouter(body: ColumnsRequest) {
     case "clickhouse":
       return columnsClickhouse(body.connection, body.schema, body.table);
     case "mongodb":
-      return { columns: [], elapsedMs: 0 }; // MongoDB is schemaless
+      return columnsMongo(body.connection, body.schema, body.table);
+    default:
+      throw new Error("Unsupported database type");
+  }
+}
+
+async function erdRouter(body: ErdRequest) {
+  switch (body.type) {
+    case "postgres":
+      return erdPostgres(body.connection, body.schema);
+    case "mysql":
+      return erdMysql(body.connection, body.schema);
+    case "clickhouse":
+      return erdClickhouse(body.connection, body.schema);
+    case "mongodb":
+      return { tables: [], relations: [], elapsedMs: 0 }; // MongoDB has no FK constraints
     default:
       throw new Error("Unsupported database type");
   }
@@ -141,8 +156,7 @@ const server = Bun.serve({
     if (url.pathname === "/api/erd" && req.method === "POST") {
       try {
         const body = (await req.json()) as ErdRequest;
-        if (body.type !== "postgres") return Response.json({ tables: [], relations: [], elapsedMs: 0 });
-        const result = await erdPostgres(body.connection, body.schema);
+        const result = await erdRouter(body);
         return Response.json(result);
       } catch (error) {
         return Response.json(

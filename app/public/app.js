@@ -790,7 +790,14 @@ function makeQueryTemplate(item) {
   const q = (s) => `"${s}"`;
   const ref = item.parent ? `${q(item.parent)}.${q(item.name)}` : q(item.name);
 
-  if (dbType === "mongodb") return JSON.stringify({ collection: item.name, action: "find", filter: {}, limit: 100 }, null, 2);
+  if (dbType === "mongodb") {
+    const base = { collection: item.name, action: "find", filter: {}, limit: 100 };
+    return JSON.stringify(base, null, 2)
+      + "\n\n// Other actions:\n"
+      + `// {"collection":"${item.name}","action":"count","filter":{}}\n`
+      + `// {"collection":"${item.name}","action":"distinct","field":"_id","filter":{}}\n`
+      + `// {"collection":"${item.name}","action":"aggregate","pipeline":[{"$match":{}},{"$limit":100}]}`;
+  }
   if (dbType === "clickhouse") {
     const ref2 = item.parent ? `${item.parent}.${item.name}` : item.name;
     return item.type === "function"
@@ -2812,6 +2819,54 @@ const SQL_KEYWORDS = [
   "IF","EXISTS","CASCADE","RESTRICT","SCHEMA","DATABASE","SHOW","USE",
 ];
 
+// ClickHouse-specific keywords and functions
+const CLICKHOUSE_KEYWORDS = [
+  "SELECT","FROM","WHERE","INSERT","INTO","VALUES","CREATE","TABLE","DROP","ALTER",
+  "ORDER","BY","GROUP","HAVING","LIMIT","OFFSET","DISTINCT","AS","AND","OR","NOT",
+  "IN","IS","NULL","LIKE","BETWEEN","EXISTS","CASE","WHEN","THEN","ELSE","END",
+  "JOIN","LEFT","RIGHT","INNER","FULL","CROSS","ARRAY","ON","WITH","UNION","ALL",
+  // ClickHouse aggregate functions
+  "count","sum","avg","min","max","uniq","uniqExact","uniqHLL12","any","anyLast",
+  "argMin","argMax","groupArray","groupArrayMovingAvg","groupUniqArray",
+  "quantile","quantiles","median","topK","entropy","skewPop","kurtPop",
+  // ClickHouse table functions / engines
+  "MergeTree","ReplicatedMergeTree","SummingMergeTree","AggregatingMergeTree",
+  "ReplacingMergeTree","CollapsingMergeTree","Distributed","Memory","Log",
+  "numbers","generateRandom","file","url","mysql","postgresql","s3","hdfs",
+  // ClickHouse-specific clauses
+  "PREWHERE","SAMPLE","FINAL","SETTINGS","FORMAT","INTO OUTFILE",
+  "ENGINE","PARTITION","TTL","CODEC","MATERIALIZED","ALIAS",
+  // ClickHouse functions
+  "toDate","toDateTime","now","today","yesterday","toStartOfDay","toStartOfMonth",
+  "toStartOfYear","toYYYYMM","toYYYYMMDD","formatDateTime","dateDiff","dateAdd",
+  "toString","toInt8","toInt16","toInt32","toInt64","toFloat32","toFloat64",
+  "toUInt8","toUInt16","toUInt32","toUInt64","toDecimal32","toDecimal64",
+  "length","lower","upper","trim","trimLeft","trimRight","substring","position",
+  "match","extract","replaceAll","replaceOne","splitByChar","arrayJoin","arrayMap",
+  "arrayFilter","arraySum","arrayMax","arrayMin","arraySort","hasAny","has",
+  "ifNull","nullIf","isNull","isNotNull","coalesce","multiIf","if",
+  "cityHash64","sipHash64","md5","sha256","generateUUIDv4","rand","rand64",
+  "JSONExtract","JSONExtractString","JSONExtractInt","JSONExtractFloat",
+  "dictGet","dictHas","EXPLAIN","SYSTEM","FLUSH","RELOAD","SYNC","REPLICA",
+];
+
+// MongoDB JSON query keys for autocomplete
+const MONGO_KEYS = [
+  "collection","action","filter","projection","limit","skip","sort","pipeline","field",
+  // actions
+  "find","findOne","aggregate","count","distinct",
+  // common operators
+  "$eq","$ne","$gt","$gte","$lt","$lte","$in","$nin","$and","$or","$not","$nor",
+  "$exists","$type","$regex","$where","$all","$elemMatch","$size",
+  "$set","$unset","$inc","$push","$pull","$addToSet","$pop","$rename",
+  // aggregation stages
+  "$match","$group","$project","$sort","$limit","$skip","$unwind","$lookup",
+  "$addFields","$replaceRoot","$count","$facet","$bucket","$bucketAuto",
+  "$sortByCount","$sample","$out","$merge","$redact","$geoNear",
+  // aggregation accumulators
+  "$sum","$avg","$min","$max","$first","$last","$push","$addToSet",
+];
+
 let _acItems = [];
 let _acIdx = -1;
 
@@ -2891,8 +2946,12 @@ function acBuildCandidates(prefix, context, dot) {
       seen.add(item.name);
     }
   }
-  // SQL keywords
-  for (const kw of SQL_KEYWORDS) {
+  // DB-specific keywords
+  const dbType = S.activeConn?.type;
+  const kwList = dbType === "clickhouse" ? CLICKHOUSE_KEYWORDS
+               : dbType === "mongodb"    ? MONGO_KEYS
+               : SQL_KEYWORDS;
+  for (const kw of kwList) {
     if (kw.toLowerCase().startsWith(p))
       candidates.push({ label: kw, kind: "keyword" });
   }
