@@ -30,6 +30,12 @@ case "$OS" in
     ;;
 esac
 
+# ── Check current version ─────────────────────────────────────────────────────
+CURRENT_VERSION=""
+if command -v "$BIN_NAME" &>/dev/null; then
+  CURRENT_VERSION="$("$BIN_NAME" --version 2>/dev/null || true)"
+fi
+
 # ── Resolve latest release ────────────────────────────────────────────────────
 echo "Fetching latest release..."
 LATEST_URL="https://api.github.com/repos/$REPO/releases/latest"
@@ -51,7 +57,18 @@ if [ -z "$DOWNLOAD_URL" ]; then
 fi
 
 VERSION="$(echo "$RELEASE_JSON" | grep -o '"tag_name": "[^"]*"' | head -1 | cut -d'"' -f4)"
-echo "Installing $BIN_NAME $VERSION ($ARTIFACT)..."
+
+# ── Skip if already up to date ────────────────────────────────────────────────
+if [ -n "$CURRENT_VERSION" ] && [ "$CURRENT_VERSION" = "$VERSION" ]; then
+  echo "Already up to date: $BIN_NAME $VERSION"
+  exit 0
+fi
+
+if [ -n "$CURRENT_VERSION" ]; then
+  echo "Updating $BIN_NAME $CURRENT_VERSION → $VERSION..."
+else
+  echo "Installing $BIN_NAME $VERSION ($ARTIFACT)..."
+fi
 
 # ── Download ──────────────────────────────────────────────────────────────────
 TMP_FILE="$(mktemp)"
@@ -79,7 +96,11 @@ else
 fi
 
 echo ""
-echo "✓ Installed: $INSTALL_DIR/$BIN_NAME"
+if [ -n "$CURRENT_VERSION" ]; then
+  echo "✓ Updated: $BIN_NAME $CURRENT_VERSION → $VERSION"
+else
+  echo "✓ Installed: $INSTALL_DIR/$BIN_NAME ($VERSION)"
+fi
 echo ""
 echo "Run:  $BIN_NAME"
 echo "Then open http://localhost:3000"

@@ -10,6 +10,13 @@ if (-not (Test-Path $InstallDir)) {
     New-Item -ItemType Directory -Path $InstallDir | Out-Null
 }
 
+# ── Check current version ─────────────────────────────────────────────────────
+$CurrentVersion = ""
+$ExistingBin = Join-Path $InstallDir $BinName
+if (Test-Path $ExistingBin) {
+    try { $CurrentVersion = & $ExistingBin --version 2>$null } catch {}
+}
+
 # ── Fetch latest release ──────────────────────────────────────────────────────
 Write-Host "Fetching latest release..."
 $ApiUrl      = "https://api.github.com/repos/$Repo/releases/latest"
@@ -23,7 +30,17 @@ if (-not $DownloadUrl) {
     exit 1
 }
 
-Write-Host "Installing bun-sql-editor $Version..."
+# ── Skip if already up to date ────────────────────────────────────────────────
+if ($CurrentVersion -and $CurrentVersion -eq $Version) {
+    Write-Host "Already up to date: bun-sql-editor $Version"
+    exit 0
+}
+
+if ($CurrentVersion) {
+    Write-Host "Updating bun-sql-editor $CurrentVersion -> $Version..."
+} else {
+    Write-Host "Installing bun-sql-editor $Version..."
+}
 
 # ── Download ──────────────────────────────────────────────────────────────────
 $TmpFile = Join-Path $env:TEMP $Artifact
@@ -44,7 +61,11 @@ if ($UserPath -notlike "*$InstallDir*") {
 }
 
 Write-Host ""
-Write-Host "Installed: $InstallDir\$BinName"
+if ($CurrentVersion) {
+    Write-Host "Updated: bun-sql-editor $CurrentVersion -> $Version"
+} else {
+    Write-Host "Installed: $InstallDir\$BinName ($Version)"
+}
 Write-Host ""
 Write-Host "Run:  bun-sql-editor"
 Write-Host "Then open http://localhost:3000"

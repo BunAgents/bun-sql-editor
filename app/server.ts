@@ -1,3 +1,10 @@
+import pkg from "../package.json";
+
+if (Bun.argv.includes("--version") || Bun.argv.includes("-v")) {
+  console.log(`release-v${pkg.version}`);
+  process.exit(0);
+}
+
 import { runPostgres, schemaPostgres, testPostgres, columnsPostgres, erdPostgres } from "./adapters/postgres";
 import { runMysql, schemaMysql, testMysql, columnsMysql, erdMysql } from "./adapters/mysql";
 import { runMongo, schemaMongo, testMongo, columnsMongo } from "./adapters/mongodb";
