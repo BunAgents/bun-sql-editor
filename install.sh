@@ -30,9 +30,142 @@ case "$OS" in
     ;;
 esac
 
+# ── macOS: create .app bundle ─────────────────────────────────────────────────
+create_macos_app() {
+  APP_DIR="/Applications/Bun SQL Editor.app"
+  CONTENTS="$APP_DIR/Contents"
+  MACOS_DIR="$CONTENTS/MacOS"
+  RESOURCES_DIR="$CONTENTS/Resources"
+
+  mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
+
+  # Launcher script — starts binary then opens browser
+  cat > "$MACOS_DIR/bun-sql-editor-launcher" <<'LAUNCHER'
+#!/usr/bin/env bash
+/usr/local/bin/bun-sql-editor &
+sleep 1
+open http://localhost:3000
+LAUNCHER
+  chmod +x "$MACOS_DIR/bun-sql-editor-launcher"
+
+  # Info.plist
+  cat > "$CONTENTS/Info.plist" <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleExecutable</key>
+  <string>bun-sql-editor-launcher</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.bunagents.bun-sql-editor</string>
+  <key>CFBundleName</key>
+  <string>Bun SQL Editor</string>
+  <key>CFBundleDisplayName</key>
+  <string>Bun SQL Editor</string>
+  <key>CFBundleVersion</key>
+  <string>1.0</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleIconFile</key>
+  <string>AppIcon</string>
+  <key>LSUIElement</key>
+  <false/>
+  <key>NSHighResolutionCapable</key>
+  <true/>
+</dict>
+</plist>
+PLIST
+
+  # Fetch and convert SVG icon → icns (best-effort, skip if tools missing)
+  if command -v rsvg-convert &>/dev/null && command -v iconutil &>/dev/null; then
+    ICONSET="$RESOURCES_DIR/AppIcon.iconset"
+    mkdir -p "$ICONSET"
+    SVG_URL="https://raw.githubusercontent.com/$REPO/main/landing/logo.svg"
+    TMP_SVG="$(mktemp /tmp/bsql-icon-XXXXXX.svg)"
+    curl -fsSL "$SVG_URL" -o "$TMP_SVG" 2>/dev/null || true
+    for SIZE in 16 32 64 128 256 512; do
+      rsvg-convert -w $SIZE -h $SIZE "$TMP_SVG" -o "$ICONSET/icon_${SIZE}x${SIZE}.png" 2>/dev/null || true
+      rsvg-convert -w $((SIZE*2)) -h $((SIZE*2)) "$TMP_SVG" -o "$ICONSET/icon_${SIZE}x${SIZE}@2x.png" 2>/dev/null || true
+    done
+    iconutil -c icns "$ICONSET" -o "$RESOURCES_DIR/AppIcon.icns" 2>/dev/null || true
+    rm -rf "$ICONSET" "$TMP_SVG"
+  fi
+
+  echo "✓ Created: $APP_DIR"
+}
+
+# ── Linux: create .desktop entry ─────────────────────────────────────────────
+create_linux_desktop() {
+  DESKTOP_DIR="$HOME/.local/share/applications"
+  ICON_DIR="$HOME/.local/share/icons/hicolor/256x256/apps"
+  mkdir -p "$DESKTOP_DIR" "$ICON_DIR"
+
+  # Launcher script — starts binary then opens browser
+  LAUNCHER_PATH="$HOME/.local/share/bun-sql-editor-launcher.sh"
+  cat > "$LAUNCHER_PATH" <<LAUNCHER
+#!/usr/bin/env bash
+/usr/local/bin/bun-sql-editor &
+sleep 1
+xdg-open http://localhost:3000
+LAUNCHER
+  chmod +x "$LAUNCHER_PATH"
+
+  # Download icon (PNG fallback from SVG via rsvg-convert or ImageMagick)
+  ICON_PATH="$ICON_DIR/bun-sql-editor.png"
+  SVG_URL="https://raw.githubusercontent.com/$REPO/main/landing/logo.svg"
+  if command -v rsvg-convert &>/dev/null; then
+    TMP_SVG="$(mktemp /tmp/bsql-icon-XXXXXX.svg)"
+    curl -fsSL "$SVG_URL" -o "$TMP_SVG" 2>/dev/null && \
+      rsvg-convert -w 256 -h 256 "$TMP_SVG" -o "$ICON_PATH" 2>/dev/null || true
+    rm -f "$TMP_SVG"
+  elif command -v convert &>/dev/null; then
+    TMP_SVG="$(mktemp /tmp/bsql-icon-XXXXXX.svg)"
+    curl -fsSL "$SVG_URL" -o "$TMP_SVG" 2>/dev/null && \
+      convert -background none -resize 256x256 "$TMP_SVG" "$ICON_PATH" 2>/dev/null || true
+    rm -f "$TMP_SVG"
+  fi
+
+  ICON_VALUE="${ICON_PATH:-bun-sql-editor}"
+
+  cat > "$DESKTOP_DIR/bun-sql-editor.desktop" <<DESKTOP
+[Desktop Entry]
+Name=Bun SQL Editor
+Comment=Local SQL workbench for PostgreSQL, MySQL, MongoDB, ClickHouse
+Exec=$LAUNCHER_PATH
+Icon=$ICON_VALUE
+Terminal=false
+Type=Application
+Categories=Development;Database;
+StartupNotify=true
+DESKTOP
+
+  chmod +x "$DESKTOP_DIR/bun-sql-editor.desktop"
+
+  # Refresh desktop database if available
+  command -v update-desktop-database &>/dev/null && \
+    update-desktop-database "$DESKTOP_DIR" 2>/dev/null || true
+
+  echo "✓ Created launcher: $DESKTOP_DIR/bun-sql-editor.desktop"
+}
+
 # ── Uninstall mode ────────────────────────────────────────────────────────────
 if [ "${1:-}" = "uninstall" ] || [ "${1:-}" = "remove" ]; then
   BIN_PATH="$INSTALL_DIR/$BIN_NAME"
+
+  if [ "$OS" = "Darwin" ]; then
+    APP_DIR="/Applications/Bun SQL Editor.app"
+    [ -d "$APP_DIR" ] && rm -rf "$APP_DIR" && echo "✓ Removed: $APP_DIR"
+  elif [ "$OS" = "Linux" ]; then
+    rm -f "$HOME/.local/share/applications/bun-sql-editor.desktop"
+    rm -f "$HOME/.local/share/icons/hicolor/256x256/apps/bun-sql-editor.png"
+    rm -f "$HOME/.local/share/bun-sql-editor-launcher.sh"
+    command -v update-desktop-database &>/dev/null && \
+      update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+    echo "✓ Removed launcher and icon"
+  fi
+
   if [ ! -f "$BIN_PATH" ]; then
     echo "$BIN_NAME is not installed at $BIN_PATH"
     exit 0
@@ -103,12 +236,19 @@ if [ "$OS" = "Darwin" ]; then
   xattr -d com.apple.quarantine "$TMP_FILE" 2>/dev/null || true
 fi
 
-# ── Install ───────────────────────────────────────────────────────────────────
+# ── Install binary ────────────────────────────────────────────────────────────
 if [ -w "$INSTALL_DIR" ]; then
   mv "$TMP_FILE" "$INSTALL_DIR/$BIN_NAME"
 else
   echo "Installing to $INSTALL_DIR (requires sudo)..."
   sudo mv "$TMP_FILE" "$INSTALL_DIR/$BIN_NAME"
+fi
+
+# ── Create shortcut ───────────────────────────────────────────────────────────
+if [ "$OS" = "Darwin" ]; then
+  create_macos_app
+elif [ "$OS" = "Linux" ]; then
+  create_linux_desktop
 fi
 
 echo ""
