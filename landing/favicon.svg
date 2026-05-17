@@ -1,24 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
   <defs>
-    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#1a5e8a"/>
-      <stop offset="100%" stop-color="#0a2e45"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0e3a5c"/>
+      <stop offset="100%" stop-color="#061e30"/>
     </linearGradient>
     <linearGradient id="cap" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#50d0f8"/>
-      <stop offset="100%" stop-color="#0090e0"/>
+      <stop offset="0%" stop-color="#60d8ff"/>
+      <stop offset="100%" stop-color="#0099ee"/>
     </linearGradient>
     <linearGradient id="bolt" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#ffe84a"/>
-      <stop offset="100%" stop-color="#f59000"/>
+      <stop offset="0%" stop-color="#fff176"/>
+      <stop offset="100%" stop-color="#ffa000"/>
     </linearGradient>
   </defs>
+  <!-- Rounded background -->
+  <rect width="32" height="32" rx="7" fill="url(#bg)"/>
   <!-- Cylinder body -->
-  <rect x="4" y="12" width="24" height="15" rx="2" fill="url(#body)"/>
+  <rect x="5" y="14" width="22" height="12" rx="1.5" fill="#0d3a58"/>
   <!-- Bottom rim -->
-  <ellipse cx="16" cy="27" rx="12" ry="3.5" fill="#071e2d"/>
+  <ellipse cx="16" cy="26" rx="11" ry="3" fill="#061525"/>
   <!-- Top cap -->
-  <ellipse cx="16" cy="12" rx="12" ry="3.5" fill="url(#cap)"/>
+  <ellipse cx="16" cy="14" rx="11" ry="3" fill="url(#cap)"/>
   <!-- Bolt -->
-  <path d="M19 2 L14 14h5L12 30 22 13h-5Z" fill="url(#bolt)"/>
+  <path d="M18 3 L13 14h4.5L11 29 21 13h-4.5Z" fill="url(#bolt)"/>
 </svg>
