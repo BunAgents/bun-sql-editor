@@ -1,9 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#1a2638"/>
-      <stop offset="100%" stop-color="#0f1b2d"/>
-    </linearGradient>
     <linearGradient id="cyl-top" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#3db8f0"/>
       <stop offset="100%" stop-color="#0072b8"/>
@@ -12,7 +8,7 @@
       <stop offset="0%" stop-color="#0f4a72"/>
       <stop offset="100%" stop-color="#082e48"/>
     </linearGradient>
-    <linearGradient id="bolt" x1="0" y1="0" x2="0.3" y2="1">
+    <linearGradient id="bolt" x1="0" y1="0.3" x2="0.3" y2="1">
       <stop offset="0%" stop-color="#ffe259"/>
       <stop offset="100%" stop-color="#f5a623"/>
     </linearGradient>
@@ -26,36 +22,30 @@
     </filter>
   </defs>
 
-  <!-- Rounded background -->
-  <rect width="256" height="256" rx="56" fill="url(#bg)"/>
-
   <!-- Cylinder body -->
-  <rect x="52" y="100" width="152" height="96" fill="url(#cyl-body)" rx="4"/>
-
-  <!-- Cylinder mid stripe -->
-  <rect x="52" y="148" width="152" height="2" fill="#1a6fa0" opacity="0.5"/>
+  <rect x="40" y="96" width="176" height="112" fill="url(#cyl-body)" rx="6"/>
 
   <!-- Cylinder bottom ellipse -->
-  <ellipse cx="128" cy="196" rx="76" ry="22" fill="#082e48"/>
-  <ellipse cx="128" cy="196" rx="76" ry="22" fill="none" stroke="#1a6fa0" stroke-width="1.5" opacity="0.6"/>
+  <ellipse cx="128" cy="208" rx="88" ry="26" fill="#082e48"/>
+  <ellipse cx="128" cy="208" rx="88" ry="26" fill="none" stroke="#1a6fa0" stroke-width="1.5" opacity="0.6"/>
 
   <!-- Cylinder top ellipse (cap) -->
-  <ellipse cx="128" cy="100" rx="76" ry="22" fill="url(#cyl-top)" filter="url(#glow)"/>
+  <ellipse cx="128" cy="96" rx="88" ry="26" fill="url(#cyl-top)" filter="url(#glow)"/>
 
   <!-- Sheen on top cap -->
-  <ellipse cx="108" cy="95" rx="28" ry="9" fill="white" opacity="0.12" transform="rotate(-10,108,95)"/>
+  <ellipse cx="104" cy="90" rx="32" ry="10" fill="white" opacity="0.12" transform="rotate(-10,104,90)"/>
 
-  <!-- Second ring stripe (mid-body) -->
-  <ellipse cx="128" cy="148" rx="76" ry="22" fill="none" stroke="#1e7ab5" stroke-width="1" opacity="0.45"/>
+  <!-- Mid-body ring -->
+  <ellipse cx="128" cy="152" rx="88" ry="26" fill="none" stroke="#1e7ab5" stroke-width="1" opacity="0.45"/>
 
-  <!-- Lightning bolt (centered, sharp) -->
-  <path d="M148 46 L108 136 H134 L108 210 L172 114 H144 Z"
+  <!-- Lightning bolt -->
+  <path d="M152 24 L104 136 H136 L104 232 L184 120 H148 Z"
         fill="url(#bolt)"
         filter="url(#boltglow)"
         opacity="0.97"/>
 
   <!-- Bolt edge highlight -->
-  <path d="M148 46 L108 136 H134 L108 210 L172 114 H144 Z"
+  <path d="M152 24 L104 136 H136 L104 232 L184 120 H148 Z"
         fill="none"
         stroke="rgba(255,240,120,0.35)"
         stroke-width="1.5"
