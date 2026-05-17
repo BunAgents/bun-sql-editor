@@ -26,9 +26,29 @@ Connect to **PostgreSQL**, **MySQL**, **MongoDB**, and **ClickHouse** from a sin
 
 ---
 
-## Download
+## Install
 
-Grab the latest binary from [**Releases**](https://github.com/BunAgents/bun-sql-editor/releases):
+**macOS / Linux — one line:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/BunAgents/bun-sql-editor/main/install.sh | bash
+```
+
+The script detects your platform, downloads the right binary, removes the macOS quarantine flag automatically, and installs to `/usr/local/bin`. Then just run:
+
+```bash
+bun-sql-editor
+```
+
+Open **http://localhost:3000** in your browser.
+
+**Custom port:**
+
+```bash
+PORT=8080 bun-sql-editor
+```
+
+**Windows** — download manually from [**Releases**](https://github.com/BunAgents/bun-sql-editor/releases):
 
 | Platform | File |
 |----------|------|
@@ -37,26 +57,6 @@ Grab the latest binary from [**Releases**](https://github.com/BunAgents/bun-sql-
 | Windows x64 | `bun-sql-editor-windows-x64.exe` |
 | Linux x64 | `bun-sql-editor-linux-x64` |
 
----
-
-## Quick Start
-
-```bash
-# macOS / Linux
-chmod +x bun-sql-editor-macos-arm64
-./bun-sql-editor-macos-arm64
-
-# Windows
-bun-sql-editor-windows-x64.exe
-
-# Custom port (default: 3000)
-PORT=8080 ./bun-sql-editor-macos-arm64
-```
-
-Open **http://localhost:3000** in your browser.
-
-> **macOS security warning:** Right-click → Open → Open. Or: `xattr -d com.apple.quarantine bun-sql-editor-macos-arm64`
->
 > **Windows SmartScreen:** Click "More info" → "Run anyway"
 
 ---
