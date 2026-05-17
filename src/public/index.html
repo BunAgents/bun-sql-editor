@@ -423,11 +423,8 @@
     </div>
 
     <script>
-      // Unregister stale service workers so new JS/CSS always loads fresh
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(regs => {
-          regs.forEach(r => r.unregister());
-        });
+        navigator.serviceWorker.register('/service-worker.js');
       }
     </script>
     <script src="/app.js" type="module"></script>
