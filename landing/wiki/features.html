@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Features — Bun SQL Editor</title>
+  <meta name="description" content="Complete feature reference for Bun SQL Editor: schema explorer, query editor, ERD diagrams, autocomplete, inline editing, and more." />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <svg width="20" height="20" viewBox="0 0 30 30" fill="none"><defs><linearGradient id="nt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#45c8f5"/><stop offset="100%" stop-color="#0080cc"/></linearGradient><linearGradient id="nb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0d4a72"/><stop offset="100%" stop-color="#08304e"/></linearGradient><linearGradient id="nl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffe55a"/><stop offset="100%" stop-color="#f5a020"/></linearGradient></defs><rect x="5" y="11" width="20" height="13" rx="1" fill="url(#nb)"/><ellipse cx="15" cy="24" rx="10" ry="3" fill="#082e48"/><ellipse cx="15" cy="11" rx="10" ry="3" fill="url(#nt)"/><path d="M17.5 3 L13 13.5 h3.5 L12 27 L21 12 h-3.5 Z" fill="url(#nl)" opacity="0.96"/></svg>
+      Bun SQL Editor
+    </a>
+    <div class="nav-sep"></div>
+    <nav class="nav-links">
+      <a href="index.html" class="active">Docs</a>
+      <a href="../blog/index.html">Blog</a>
+      <a href="https://github.com/BunAgents/bun-sql-editor/releases">Releases</a>
+    </nav>
+    <div class="nav-right">
+      <a href="https://github.com/BunAgents/bun-sql-editor" class="btn btn-ghost btn-sm">GitHub</a>
+    </div>
+  </div>
+</header>
+
+<div class="wiki-layout">
+  <aside class="wiki-sidebar">
+    <div class="wiki-sidebar-title">Getting Started</div>
+    <a href="index.html" class="wiki-nav-item">Overview</a>
+    <a href="setup.html" class="wiki-nav-item">Installation & Setup</a>
+    <div class="wiki-sidebar-title">Features</div>
+    <a href="features.html" class="wiki-nav-item active">All Features</a>
+    <a href="#schema-explorer" class="wiki-nav-item">Schema Explorer</a>
+    <a href="#query-editor" class="wiki-nav-item">Query Editor</a>
+    <a href="#erd" class="wiki-nav-item">ERD Diagrams</a>
+    <a href="#autocomplete" class="wiki-nav-item">Autocomplete</a>
+    <a href="#keyboard" class="wiki-nav-item">Keyboard Shortcuts</a>
+    <div class="wiki-sidebar-title">Databases</div>
+    <a href="#postgresql" class="wiki-nav-item">PostgreSQL</a>
+    <a href="#mysql" class="wiki-nav-item">MySQL</a>
+    <a href="#mongodb" class="wiki-nav-item">MongoDB</a>
+    <a href="#clickhouse" class="wiki-nav-item">ClickHouse</a>
+    <div class="wiki-sidebar-title">Help</div>
+    <a href="faq.html" class="wiki-nav-item">FAQ</a>
+    <a href="https://github.com/BunAgents/bun-sql-editor/issues" class="wiki-nav-item">Report an Issue</a>
+  </aside>
+
+  <main class="wiki-content">
+    <div class="prose">
+      <h1>Features</h1>
+      <p>A complete reference of everything Bun SQL Editor can do.</p>
+
+      <h2 id="schema-explorer">Schema Explorer</h2>
+      <p>The left sidebar shows your database schema as a collapsible tree. Click any item to expand it. Double-click a table or collection to open a query tab with a pre-filled <code>SELECT *</code> template.</p>
+      <p>Right-click any item to open the context menu with actions like <strong>Copy Name</strong>, <strong>Open ERD</strong>, <strong>VACUUM ANALYZE</strong>, and <strong>REINDEX TABLE</strong> (PostgreSQL).</p>
+
+      <h3>Supported object types per database</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Type</th><th>PG</th><th>MySQL</th><th>MongoDB</th><th>ClickHouse</th></tr></thead>
+          <tbody>
+            <tr><td>Tables</td><td>✓</td><td>✓</td><td>—</td><td>✓</td></tr>
+            <tr><td>Views</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+            <tr><td>Materialized Views</td><td>✓</td><td>—</td><td>—</td><td>✓</td></tr>
+            <tr><td>Collections</td><td>—</td><td>—</td><td>✓</td><td>—</td></tr>
+            <tr><td>Functions / Procedures</td><td>✓</td><td>✓</td><td>—</td><td>—</td></tr>
+            <tr><td>Sequences</td><td>✓</td><td>—</td><td>—</td><td>—</td></tr>
+            <tr><td>Triggers</td><td>✓</td><td>✓</td><td>—</td><td>—</td></tr>
+            <tr><td>Indexes</td><td>✓</td><td>—</td><td>—</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="query-editor">Query Editor</h2>
+      <p>The main editor area supports multiple tabs. Each tab is independent and can connect to a different database.</p>
+      <ul>
+        <li><strong>Run query</strong> — Ctrl+Enter (or click Run)</li>
+        <li><strong>Format SQL</strong> — Ctrl+Shift+F</li>
+        <li><strong>Query history</strong> — Ctrl+H</li>
+        <li><strong>New tab</strong> — Ctrl+T</li>
+        <li><strong>Close tab</strong> — Ctrl+W</li>
+      </ul>
+      <p>Results are shown in a scrollable table below the editor. Click any column header to sort. The row count and elapsed time are shown in the result bar.</p>
+
+      <h3>Inline cell editing</h3>
+      <p>Double-click any cell in the result table to edit it in-place. The editor generates a safe <code>UPDATE</code> statement targeting the row by its primary key. Press <strong>Enter</strong> to apply or <strong>Escape</strong> to cancel.</p>
+
+      <div class="callout callout-warning">
+        <div class="callout-icon">⚠</div>
+        <div class="callout-body">Inline editing requires the result set to include the primary key column. Run <code>SELECT *</code> to ensure all columns are present.</div>
+      </div>
+
+      <h3>SQL Formatter</h3>
+      <p>Press <strong>Ctrl+Shift+F</strong> to format the current query. The formatter uses a token-based parser that respects string literals, comments, and identifiers — it will not mangle quoted strings or <code>-- comments</code>.</p>
+
+      <h3>Query History</h3>
+      <p>Press <strong>Ctrl+H</strong> to open the query history panel. Every query you execute is saved to <code>localStorage</code>. Click any entry to load it back into the editor.</p>
+
+      <h2 id="erd">ERD Diagrams</h2>
+      <p>Click the ERD icon (🗺) on any schema in the sidebar, or right-click a schema and choose <strong>Open ERD</strong>, to open an entity-relationship diagram for that schema.</p>
+      <ul>
+        <li><strong>Drag</strong> table cards to rearrange</li>
+        <li><strong>Scroll</strong> or pinch to zoom</li>
+        <li><strong>Click and drag</strong> the background to pan</li>
+        <li><strong>Fit to screen</strong> button resets the view</li>
+      </ul>
+      <p>Foreign key relationships are drawn as bezier curves with arrowheads. ClickHouse ERDs show tables and columns only (no FK constraints in ClickHouse).</p>
+
+      <h2 id="autocomplete">Autocomplete</h2>
+      <p>The editor provides context-aware autocomplete triggered automatically as you type. Press <strong>Tab</strong> or <strong>Enter</strong> to accept a suggestion, <strong>Escape</strong> to dismiss.</p>
+      <ul>
+        <li><strong>Schema names</strong> — type the first letters of a schema</li>
+        <li><strong>Table/view names</strong> — type after <code>FROM</code> or <code>JOIN</code></li>
+        <li><strong>Column names</strong> — type <code>tablename.</code> to see columns</li>
+        <li><strong>SQL keywords</strong> — uppercase keywords like <code>SELECT</code>, <code>WHERE</code></li>
+      </ul>
+      <p>Autocomplete is database-aware: ClickHouse connections show ClickHouse-specific functions and engines; MongoDB connections show query operators and aggregation stages.</p>
+      <p>Identifiers with uppercase letters or spaces are automatically wrapped in double quotes when inserted.</p>
+
+      <h2 id="keyboard">Keyboard Shortcuts</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Shortcut</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td><code>Ctrl+Enter</code></td><td>Run query</td></tr>
+            <tr><td><code>Ctrl+Shift+F</code></td><td>Format SQL</td></tr>
+            <tr><td><code>Ctrl+H</code></td><td>Toggle query history</td></tr>
+            <tr><td><code>Ctrl+T</code></td><td>New query tab</td></tr>
+            <tr><td><code>Ctrl+W</code></td><td>Close current tab</td></tr>
+            <tr><td><code>Tab / Enter</code></td><td>Accept autocomplete suggestion</td></tr>
+            <tr><td><code>Escape</code></td><td>Dismiss autocomplete</td></tr>
+            <tr><td><code>↑ / ↓</code></td><td>Navigate autocomplete list</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="postgresql">PostgreSQL</h2>
+      <p>Full feature support. Schema explorer shows tables, views, materialized views, functions, sequences, triggers, and indexes. ERD includes foreign key relationships with ON DELETE rules.</p>
+      <p>Right-click context menu extras:</p>
+      <ul>
+        <li><strong>VACUUM ANALYZE</strong> — reclaims storage and updates statistics</li>
+        <li><strong>REINDEX TABLE</strong> — rebuilds all indexes on the table</li>
+      </ul>
+
+      <h2 id="mysql">MySQL</h2>
+      <p>Schema explorer shows tables, views, stored procedures, and triggers scoped to the connected database. ERD includes foreign key relationships.</p>
+      <p>Use <code>COLUMN_TYPE</code> values (e.g. <code>varchar(255)</code>, <code>int unsigned</code>) in column metadata for full type information.</p>
+
+      <h2 id="mongodb">MongoDB</h2>
+      <p>MongoDB uses a JSON-based query format instead of SQL. Double-click any collection to get a pre-filled template:</p>
+      <pre>{
+  "collection": "users",
+  "action": "find",
+  "filter": {},
+  "limit": 100
+}</pre>
+      <p>Supported actions:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Action</th><th>Description</th><th>Extra fields</th></tr></thead>
+          <tbody>
+            <tr><td><code>find</code></td><td>Query documents</td><td>filter, projection, sort, limit, skip</td></tr>
+            <tr><td><code>findOne</code></td><td>Return first matching document</td><td>filter, projection</td></tr>
+            <tr><td><code>aggregate</code></td><td>Aggregation pipeline</td><td>pipeline (array)</td></tr>
+            <tr><td><code>count</code></td><td>Count matching documents</td><td>filter</td></tr>
+            <tr><td><code>distinct</code></td><td>Distinct values for a field</td><td>field, filter</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Column inference: the editor samples up to 20 documents to infer field names and types. Because MongoDB is schemaless, types are shown as <code>string | number</code> when documents have mixed types.</p>
+
+      <h2 id="clickhouse">ClickHouse</h2>
+      <p>Multi-database schema explorer showing all databases (excluding <code>system</code> and <code>information_schema</code>). Detects View and MaterializedView engines from <code>system.tables</code>.</p>
+      <p>ClickHouse has no foreign key constraints, so ERD shows table structures only — no relationship lines.</p>
+      <p>Autocomplete includes 80+ ClickHouse-specific functions, table engines (<code>MergeTree</code>, <code>ReplicatedMergeTree</code>, etc.), and clauses (<code>PREWHERE</code>, <code>FINAL</code>, <code>SETTINGS</code>).</p>
+    </div>
+  </main>
+</div>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <span>© 2025 Bun SQL Editor · MIT License</span>
+    <div class="footer-links">
+      <a href="../index.html">Home</a>
+      <a href="https://github.com/BunAgents/bun-sql-editor">GitHub</a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAQ — Bun SQL Editor</title>
+  <meta name="description" content="Frequently asked questions about Bun SQL Editor." />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <svg width="20" height="20" viewBox="0 0 30 30" fill="none"><defs><linearGradient id="nt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#45c8f5"/><stop offset="100%" stop-color="#0080cc"/></linearGradient><linearGradient id="nb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0d4a72"/><stop offset="100%" stop-color="#08304e"/></linearGradient><linearGradient id="nl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffe55a"/><stop offset="100%" stop-color="#f5a020"/></linearGradient></defs><rect x="5" y="11" width="20" height="13" rx="1" fill="url(#nb)"/><ellipse cx="15" cy="24" rx="10" ry="3" fill="#082e48"/><ellipse cx="15" cy="11" rx="10" ry="3" fill="url(#nt)"/><path d="M17.5 3 L13 13.5 h3.5 L12 27 L21 12 h-3.5 Z" fill="url(#nl)" opacity="0.96"/></svg>
+      Bun SQL Editor
+    </a>
+    <div class="nav-sep"></div>
+    <nav class="nav-links">
+      <a href="index.html" class="active">Docs</a>
+      <a href="../blog/index.html">Blog</a>
+      <a href="https://github.com/BunAgents/bun-sql-editor/releases">Releases</a>
+    </nav>
+    <div class="nav-right">
+      <a href="https://github.com/BunAgents/bun-sql-editor" class="btn btn-ghost btn-sm">GitHub</a>
+    </div>
+  </div>
+</header>
+
+<div class="wiki-layout">
+  <aside class="wiki-sidebar">
+    <div class="wiki-sidebar-title">Getting Started</div>
+    <a href="index.html" class="wiki-nav-item">Overview</a>
+    <a href="setup.html" class="wiki-nav-item">Installation & Setup</a>
+    <div class="wiki-sidebar-title">Features</div>
+    <a href="features.html" class="wiki-nav-item">All Features</a>
+    <a href="features.html#schema-explorer" class="wiki-nav-item">Schema Explorer</a>
+    <a href="features.html#query-editor" class="wiki-nav-item">Query Editor</a>
+    <a href="features.html#erd" class="wiki-nav-item">ERD Diagrams</a>
+    <a href="features.html#autocomplete" class="wiki-nav-item">Autocomplete</a>
+    <a href="features.html#keyboard" class="wiki-nav-item">Keyboard Shortcuts</a>
+    <div class="wiki-sidebar-title">Databases</div>
+    <a href="features.html#postgresql" class="wiki-nav-item">PostgreSQL</a>
+    <a href="features.html#mysql" class="wiki-nav-item">MySQL</a>
+    <a href="features.html#mongodb" class="wiki-nav-item">MongoDB</a>
+    <a href="features.html#clickhouse" class="wiki-nav-item">ClickHouse</a>
+    <div class="wiki-sidebar-title">Help</div>
+    <a href="faq.html" class="wiki-nav-item active">FAQ</a>
+    <a href="https://github.com/BunAgents/bun-sql-editor/issues" class="wiki-nav-item">Report an Issue</a>
+  </aside>
+
+  <main class="wiki-content">
+    <div class="prose">
+      <h1>FAQ</h1>
+
+      <h2>Is my data safe? Do you store my credentials?</h2>
+      <p>Yes, your data is safe. Connection credentials are stored exclusively in your browser's <strong>localStorage</strong> and are only ever sent to the local binary running on your own machine. Nothing is stored on any external server. The source code is fully public — you can audit every line at <a href="https://github.com/BunAgents/bun-sql-editor">github.com/BunAgents/bun-sql-editor</a>.</p>
+
+      <h2>Why do I get a security warning on macOS / Windows?</h2>
+      <p>The binary is not code-signed. Code signing certificates cost $300–500/year per platform. Since the project is open source, the most trustworthy option is to let you read the code and build the binary yourself. See <a href="setup.html#security-warning">Installation — Handle OS security prompt</a> for instructions on bypassing the warning.</p>
+
+      <h2>Can I use this as a team / shared tool?</h2>
+      <p>Yes, but with caveats. If you run the binary on a shared server and expose it to the internet, anyone with the URL can connect to your databases. There is currently no built-in authentication. For team use, put it behind a VPN or a reverse proxy with HTTP Basic Auth (e.g. Nginx, Caddy, or Cloudflare Access).</p>
+
+      <h2>Why not a cloud-hosted version?</h2>
+      <p>A cloud-hosted version would require your database credentials to pass through a third-party server. We believe that is fundamentally a poor security trade-off for a database tool. See <a href="../blog/why-local.html">Why local? The case for a binary-first SQL editor</a> for the full explanation.</p>
+
+      <h2>Can I connect to a remote database?</h2>
+      <p>Yes. The host field accepts any hostname or IP. Your local binary connects directly to the remote database over TCP. Ensure the database port is reachable from your machine (firewall rules, VPN, SSH tunnel if needed).</p>
+
+      <h2>How do I use an SSH tunnel?</h2>
+      <p>Set up the tunnel separately, then connect to the forwarded local port:</p>
+      <pre>ssh -L 5433:db.internal:5432 user@bastion-host</pre>
+      <p>Then in Bun SQL Editor connect to <code>localhost:5433</code>.</p>
+
+      <h2>Does it work offline?</h2>
+      <p>The UI shell is cached by the service worker and loads offline. Queries obviously require a live connection to the database.</p>
+
+      <h2>Where is my data stored?</h2>
+      <ul>
+        <li><strong>Connection configs</strong> — browser localStorage</li>
+        <li><strong>Query history</strong> — browser localStorage</li>
+        <li><strong>Query results</strong> — in-memory only, cleared on refresh</li>
+        <li><strong>Nothing</strong> is stored on disk by the binary (it is stateless)</li>
+      </ul>
+
+      <h2>Can I run multiple instances on different ports?</h2>
+      <pre>PORT=3001 ./bun-sql-editor-macos-arm64
+PORT=3002 ./bun-sql-editor-macos-arm64</pre>
+      <p>Each instance is fully independent. Note that each browser window's localStorage is scoped to the origin (<code>localhost:3001</code> vs <code>localhost:3002</code>), so connection configs are not shared between ports.</p>
+
+      <h2>Does it support SSL / TLS connections?</h2>
+      <p>Yes. Toggle the <strong>SSL</strong> switch in the connection dialog. For PostgreSQL this maps to <code>ssl: true</code> in the pg driver, which enables TLS without certificate verification by default.</p>
+
+      <h2>How do I report a bug or request a feature?</h2>
+      <p>Open an issue on <a href="https://github.com/BunAgents/bun-sql-editor/issues">GitHub Issues</a>. Please include your OS, database type, and steps to reproduce.</p>
+
+      <h2>Can I contribute?</h2>
+      <p>Absolutely. Fork the repo, make your changes, and open a pull request. The codebase is vanilla TypeScript on the backend and vanilla JS on the frontend — no frameworks, no bundler step required for development.</p>
+    </div>
+  </main>
+</div>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <span>© 2025 Bun SQL Editor · MIT License</span>
+    <div class="footer-links">
+      <a href="../index.html">Home</a>
+      <a href="https://github.com/BunAgents/bun-sql-editor">GitHub</a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

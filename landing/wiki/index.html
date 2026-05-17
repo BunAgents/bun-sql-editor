@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Documentation — Bun SQL Editor</title>
+  <meta name="description" content="Full documentation for Bun SQL Editor — setup, features, keyboard shortcuts, FAQ and more." />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <svg width="20" height="20" viewBox="0 0 30 30" fill="none"><defs><linearGradient id="nt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#45c8f5"/><stop offset="100%" stop-color="#0080cc"/></linearGradient><linearGradient id="nb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0d4a72"/><stop offset="100%" stop-color="#08304e"/></linearGradient><linearGradient id="nl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffe55a"/><stop offset="100%" stop-color="#f5a020"/></linearGradient></defs><rect x="5" y="11" width="20" height="13" rx="1" fill="url(#nb)"/><ellipse cx="15" cy="24" rx="10" ry="3" fill="#082e48"/><ellipse cx="15" cy="11" rx="10" ry="3" fill="url(#nt)"/><path d="M17.5 3 L13 13.5 h3.5 L12 27 L21 12 h-3.5 Z" fill="url(#nl)" opacity="0.96"/></svg>
+      Bun SQL Editor
+    </a>
+    <div class="nav-sep"></div>
+    <nav class="nav-links">
+      <a href="index.html" class="active">Docs</a>
+      <a href="../blog/index.html">Blog</a>
+      <a href="https://github.com/BunAgents/bun-sql-editor/releases">Releases</a>
+    </nav>
+    <div class="nav-right">
+      <a href="https://github.com/BunAgents/bun-sql-editor" class="btn btn-ghost btn-sm">GitHub</a>
+    </div>
+  </div>
+</header>
+
+<div class="wiki-layout">
+  <aside class="wiki-sidebar">
+    <div class="wiki-sidebar-title">Getting Started</div>
+    <a href="index.html" class="wiki-nav-item active">Overview</a>
+    <a href="setup.html" class="wiki-nav-item">Installation & Setup</a>
+    <div class="wiki-sidebar-title">Features</div>
+    <a href="features.html" class="wiki-nav-item">All Features</a>
+    <a href="features.html#schema-explorer" class="wiki-nav-item">Schema Explorer</a>
+    <a href="features.html#query-editor" class="wiki-nav-item">Query Editor</a>
+    <a href="features.html#erd" class="wiki-nav-item">ERD Diagrams</a>
+    <a href="features.html#autocomplete" class="wiki-nav-item">Autocomplete</a>
+    <a href="features.html#keyboard" class="wiki-nav-item">Keyboard Shortcuts</a>
+    <div class="wiki-sidebar-title">Databases</div>
+    <a href="features.html#postgresql" class="wiki-nav-item">PostgreSQL</a>
+    <a href="features.html#mysql" class="wiki-nav-item">MySQL</a>
+    <a href="features.html#mongodb" class="wiki-nav-item">MongoDB</a>
+    <a href="features.html#clickhouse" class="wiki-nav-item">ClickHouse</a>
+    <div class="wiki-sidebar-title">Help</div>
+    <a href="faq.html" class="wiki-nav-item">FAQ</a>
+    <a href="https://github.com/BunAgents/bun-sql-editor/issues" class="wiki-nav-item">Report an Issue</a>
+  </aside>
+
+  <main class="wiki-content">
+    <div class="prose">
+      <h1>Bun SQL Editor Documentation</h1>
+      <p>Welcome to the Bun SQL Editor docs. This is a lightweight, open-source SQL workbench that runs as a single local binary — no cloud, no installation, no vendor lock-in.</p>
+
+      <h2>Quick navigation</h2>
+      <div class="link-cards" style="margin-bottom:2rem">
+        <a href="setup.html" class="link-card">
+          <div class="link-card-icon">🚀</div>
+          <div><h4>Installation & Setup</h4><p>Download, run, first connection</p></div>
+        </a>
+        <a href="features.html" class="link-card">
+          <div class="link-card-icon">✨</div>
+          <div><h4>Features</h4><p>Everything the editor can do</p></div>
+        </a>
+        <a href="faq.html" class="link-card">
+          <div class="link-card-icon">❓</div>
+          <div><h4>FAQ</h4><p>Common questions answered</p></div>
+        </a>
+        <a href="https://github.com/BunAgents/bun-sql-editor/issues" class="link-card">
+          <div class="link-card-icon">🐛</div>
+          <div><h4>Issues</h4><p>Report bugs or request features</p></div>
+        </a>
+      </div>
+
+      <h2>What is Bun SQL Editor?</h2>
+      <p>Bun SQL Editor is a web-based SQL workbench that runs entirely on your own machine. It is distributed as a single self-contained binary — download it, run it, open <code>localhost:3000</code> in your browser, and connect to your databases.</p>
+      <p>It supports <strong>PostgreSQL</strong>, <strong>MySQL</strong>, <strong>MongoDB</strong>, and <strong>ClickHouse</strong> from a single interface, with features comparable to DBeaver or TablePlus.</p>
+
+      <h2>How it works</h2>
+      <p>The binary starts a small HTTP server on your machine. Your browser connects to <code>localhost:3000</code> and the server acts as a proxy between the browser and your database. Because the server runs locally, your credentials never leave your machine.</p>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">ℹ</div>
+        <div class="callout-body"><strong>Why not a pure web app?</strong> Browsers cannot open raw TCP connections, which all major database protocols require. A local server is the only secure way to bridge the gap. <a href="../blog/why-local.html">Read the full explanation →</a></div>
+      </div>
+
+      <h2>Supported databases</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Database</th><th>Schema Explorer</th><th>ERD</th><th>Inline Edit</th><th>Autocomplete</th></tr></thead>
+          <tbody>
+            <tr><td>PostgreSQL</td><td>Tables, Views, MatViews, Functions, Sequences, Triggers, Indexes</td><td>✓ with FK lines</td><td>✓</td><td>✓ SQL</td></tr>
+            <tr><td>MySQL</td><td>Tables, Views, Procedures, Triggers</td><td>✓ with FK lines</td><td>✓</td><td>✓ SQL</td></tr>
+            <tr><td>MongoDB</td><td>Collections, Views</td><td>—</td><td>—</td><td>✓ operators</td></tr>
+            <tr><td>ClickHouse</td><td>Tables, Views, MatViews (multi-DB)</td><td>✓ tables only</td><td>✓</td><td>✓ CH functions</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <span>© 2025 Bun SQL Editor · MIT License</span>
+    <div class="footer-links">
+      <a href="../index.html">Home</a>
+      <a href="https://github.com/BunAgents/bun-sql-editor">GitHub</a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

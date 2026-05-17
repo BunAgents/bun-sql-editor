@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog — Bun SQL Editor</title>
+  <meta name="description" content="Articles about Bun SQL Editor, local-first development, and database tooling." />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <svg width="20" height="20" viewBox="0 0 30 30" fill="none"><defs><linearGradient id="nt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#45c8f5"/><stop offset="100%" stop-color="#0080cc"/></linearGradient><linearGradient id="nb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0d4a72"/><stop offset="100%" stop-color="#08304e"/></linearGradient><linearGradient id="nl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffe55a"/><stop offset="100%" stop-color="#f5a020"/></linearGradient></defs><rect x="5" y="11" width="20" height="13" rx="1" fill="url(#nb)"/><ellipse cx="15" cy="24" rx="10" ry="3" fill="#082e48"/><ellipse cx="15" cy="11" rx="10" ry="3" fill="url(#nt)"/><path d="M17.5 3 L13 13.5 h3.5 L12 27 L21 12 h-3.5 Z" fill="url(#nl)" opacity="0.96"/></svg>
+      Bun SQL Editor
+    </a>
+    <div class="nav-sep"></div>
+    <nav class="nav-links">
+      <a href="../wiki/index.html">Docs</a>
+      <a href="index.html" class="active">Blog</a>
+      <a href="https://github.com/BunAgents/bun-sql-editor/releases">Releases</a>
+    </nav>
+    <div class="nav-right">
+      <a href="https://github.com/BunAgents/bun-sql-editor" class="btn btn-ghost btn-sm">GitHub</a>
+    </div>
+  </div>
+</header>
+
+<main style="padding: 4rem 0">
+  <div class="container-sm">
+    <div class="section-tag">Blog</div>
+    <h1 class="section-title">Articles</h1>
+    <p class="section-sub" style="margin-bottom:3rem">Thoughts on local-first tooling, database development, and the story behind Bun SQL Editor.</p>
+
+    <div class="blog-grid">
+      <article class="blog-item">
+        <div class="blog-item-meta">
+          <span class="badge badge-blue">Architecture</span>
+          <span>May 2025</span>
+          <span>5 min read</span>
+        </div>
+        <h2><a href="why-local.html">Why local? The case for a binary-first SQL editor</a></h2>
+        <p>Every web-based SQL editor requires a backend proxy. We explain why that's unavoidable, why it matters for your security, and why running that proxy yourself is the right answer.</p>
+      </article>
+
+      <article class="blog-item">
+        <div class="blog-item-meta">
+          <span class="badge badge-green">Technical</span>
+          <span>May 2025</span>
+          <span>4 min read</span>
+        </div>
+        <h2><a href="how-erd-works.html">How we built ERD diagrams with vanilla JS and SVG</a></h2>
+        <p>No D3, no React, no canvas library. Just SVG bezier curves, absolute positioned divs, and some math. Here's how the ERD feature works under the hood.</p>
+      </article>
+
+      <article class="blog-item">
+        <div class="blog-item-meta">
+          <span class="badge badge-yellow">Deep dive</span>
+          <span>May 2025</span>
+          <span>6 min read</span>
+        </div>
+        <h2><a href="pwa-limitations.html">Why your SQL editor can't be a pure PWA (and what we did instead)</a></h2>
+        <p>Progressive Web Apps are powerful, but they hit a hard wall when it comes to database connections. We explore the TCP limitation, why it can't be worked around, and our binary-based solution.</p>
+      </article>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <span>© 2025 Bun SQL Editor · MIT License</span>
+    <div class="footer-links">
+      <a href="../index.html">Home</a>
+      <a href="../wiki/index.html">Docs</a>
+      <a href="https://github.com/BunAgents/bun-sql-editor">GitHub</a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

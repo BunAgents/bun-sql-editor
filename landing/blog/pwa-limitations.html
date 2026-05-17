@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Why your SQL editor can't be a pure PWA — Bun SQL Editor Blog</title>
+  <meta name="description" content="Progressive Web Apps are powerful, but they hit a hard wall when it comes to database connections. We explore the TCP limitation and our binary-based solution." />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <svg width="20" height="20" viewBox="0 0 30 30" fill="none"><defs><linearGradient id="nt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#45c8f5"/><stop offset="100%" stop-color="#0080cc"/></linearGradient><linearGradient id="nb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0d4a72"/><stop offset="100%" stop-color="#08304e"/></linearGradient><linearGradient id="nl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffe55a"/><stop offset="100%" stop-color="#f5a020"/></linearGradient></defs><rect x="5" y="11" width="20" height="13" rx="1" fill="url(#nb)"/><ellipse cx="15" cy="24" rx="10" ry="3" fill="#082e48"/><ellipse cx="15" cy="11" rx="10" ry="3" fill="url(#nt)"/><path d="M17.5 3 L13 13.5 h3.5 L12 27 L21 12 h-3.5 Z" fill="url(#nl)" opacity="0.96"/></svg>
+      Bun SQL Editor
+    </a>
+    <div class="nav-sep"></div>
+    <nav class="nav-links">
+      <a href="../wiki/index.html">Docs</a>
+      <a href="index.html" class="active">Blog</a>
+    </nav>
+    <div class="nav-right">
+      <a href="https://github.com/BunAgents/bun-sql-editor" class="btn btn-ghost btn-sm">GitHub</a>
+    </div>
+  </div>
+</header>
+
+<main style="padding: 3rem 0 5rem">
+  <div class="container-sm">
+    <div class="post-header">
+      <div class="post-meta">
+        <span class="badge badge-yellow">Deep dive</span>
+        <span>May 2025</span>
+        <span>6 min read</span>
+      </div>
+      <h1>Why your SQL editor can't be a pure PWA (and what we did instead)</h1>
+    </div>
+
+    <div class="prose">
+      <p>Progressive Web Apps are genuinely impressive. Service workers, Web App Manifest, OPFS, IndexedDB, background sync — modern browsers are powerful application runtimes. A lot of software that used to require native apps can now be PWAs.</p>
+      <p>But not a SQL editor that connects to external databases. Here's why.</p>
+
+      <h2>What PWAs can do</h2>
+      <p>A PWA can:</p>
+      <ul>
+        <li>Install to your home screen or desktop</li>
+        <li>Work offline via service worker caching</li>
+        <li>Store data locally with IndexedDB or OPFS</li>
+        <li>Make HTTP/HTTPS requests to any server</li>
+        <li>Open WebSocket connections</li>
+        <li>Run CPU-intensive code via WebAssembly</li>
+      </ul>
+      <p>This is a rich platform. Many apps — note-taking, drawing tools, code editors, even IDEs — work beautifully as PWAs.</p>
+
+      <h2>The one thing PWAs can't do</h2>
+      <p>Open a raw TCP connection.</p>
+      <p>That's it. That's the wall. Browsers are deliberately prevented from opening arbitrary TCP sockets. The <a href="https://wicg.github.io/direct-sockets/">Direct Sockets API</a> exists as a proposal for isolated web apps, but it's not available in standard browser contexts and requires special permissions not available to regular websites.</p>
+      <p>Why does this matter? Because database protocols are TCP:</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Database</th><th>Protocol</th><th>Browser accessible?</th></tr></thead>
+          <tbody>
+            <tr><td>PostgreSQL</td><td>Custom binary over TCP:5432</td><td class="cross">✗ No</td></tr>
+            <tr><td>MySQL</td><td>Custom binary over TCP:3306</td><td class="cross">✗ No</td></tr>
+            <tr><td>MongoDB</td><td>BSON over TCP:27017</td><td class="cross">✗ No</td></tr>
+            <tr><td>ClickHouse</td><td>HTTP:8123 or TCP:9000</td><td class="warn">⚠ HTTP only, with CORS</td></tr>
+            <tr><td>SQLite (embedded)</td><td>In-process (no network)</td><td class="check">✓ Via WASM</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>What about WebAssembly?</h2>
+      <p>WebAssembly (WASM) lets you run near-native code in the browser. Projects like <a href="https://pglite.dev">PGlite</a> compile PostgreSQL to WASM and run it entirely in the browser. This is remarkable engineering.</p>
+      <p>But it's an <em>embedded</em> database — it runs inside the browser tab, stores data in OPFS (the browser filesystem), and has no network connectivity. You can't use it to connect to your existing PostgreSQL server. It's great for development sandboxes and local prototyping, not for production database tooling.</p>
+
+      <h2>The websocket workaround</h2>
+      <p>Some tools proxy database connections through WebSockets. The architecture looks like:</p>
+      <pre>Browser ←→ WebSocket ←→ Proxy server ←→ Database</pre>
+      <p>This works, but the proxy server still has to exist somewhere. And now your credentials are flowing through a WebSocket connection to that proxy. You're back to the trust problem — whose server is the proxy on?</p>
+
+      <h2>Our approach: local binary as PWA backend</h2>
+      <p>Bun SQL Editor is technically a PWA — it has a manifest, a service worker, and can be installed to your desktop. But its "backend" is a local binary, not a cloud server.</p>
+      <p>The architecture:</p>
+      <pre>PWA (browser) ←→ localhost:3000 (binary) ←→ Database</pre>
+      <p>The PWA shell — all the HTML, CSS, JS — is served by the local binary and cached by the service worker. Once loaded, the UI works offline. Only the actual database queries require a live connection to the local binary.</p>
+      <p>This gives you the best of both worlds:</p>
+      <ul>
+        <li>Install to desktop, native app feel (PWA)</li>
+        <li>Credentials never leave your machine (local binary)</li>
+        <li>No code signing headache (open source binary)</li>
+        <li>Works with any TCP-accessible database (direct connection)</li>
+      </ul>
+
+      <h2>The one friction point</h2>
+      <p>The binary has to be running for queries to work. If you close the terminal, the app loses its backend. This is a real UX difference from a pure web app.</p>
+      <p>The solution is to set the binary to start automatically with your OS — add it to Login Items (macOS), Task Scheduler (Windows), or a systemd service (Linux). Then it behaves like any other background service: always running, accessible from the browser whenever you need it.</p>
+
+      <h2>Is this the right trade-off?</h2>
+      <p>For a personal database tool used by developers who already run local servers (Docker, local Postgres, Redis...), yes. Running one more background process is not a meaningful burden.</p>
+      <p>For a tool that needs to work on any device without any setup — a pure SaaS — the answer is no. But then you're back to trusting someone else's server with your database credentials. That's the fundamental choice: convenience vs. control.</p>
+      <p>We chose control.</p>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <span>© 2025 Bun SQL Editor · MIT License</span>
+    <div class="footer-links">
+      <a href="index.html">← All posts</a>
+      <a href="https://github.com/BunAgents/bun-sql-editor">GitHub</a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
