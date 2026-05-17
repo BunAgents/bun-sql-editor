@@ -39,10 +39,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build binary
-        env:
-          TARGET: ${{ matrix.target }}
-          ARTIFACT: ${{ matrix.artifact }}
-        run: bun build --compile --target="$TARGET" app/server.ts --outfile="$ARTIFACT"
+        run: bun build --compile --target=${{ matrix.target }} app/server.ts --outfile=${{ matrix.artifact }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

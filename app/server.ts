@@ -197,4 +197,27 @@ const server = Bun.serve({
   },
 });
 
+// Landing page server (dev only — in production landing is deployed separately)
+const landingPort = Number(process.env.LANDING_PORT ?? 4000);
+Bun.serve({
+  port: landingPort,
+  async fetch(req) {
+    const url = new URL(req.url);
+    let pathname = url.pathname;
+    if (pathname === "/" || pathname === "") pathname = "/index.html";
+    const file = Bun.file(`./landing${pathname}`);
+    if (await file.exists()) {
+      const noStore = pathname.endsWith(".js") || pathname.endsWith(".css");
+      return new Response(file, {
+        headers: {
+          "content-type": contentType(pathname),
+          "cache-control": noStore ? "no-store" : "no-cache",
+        },
+      });
+    }
+    return new Response("Not found", { status: 404 });
+  },
+});
+
 console.log(`SQL editor running on http://localhost:${server.port}`);
+console.log(`Landing page running on http://localhost:${landingPort}`);
