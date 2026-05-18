@@ -105,12 +105,14 @@ export const el = {
   newPinInput:     get("newPinInput") as HTMLInputElement,
   confirmPinInput: get("confirmPinInput") as HTMLInputElement,
   setPinError:     get("setPinError"),
-  // AI assistant
+  // AI chat panel
   aiBtn:           get("aiBtn"),
-  aiPromptBar:     get("aiPromptBar"),
-  aiPromptInput:   get("aiPromptInput") as HTMLInputElement,
-  aiSendBtn:       get("aiSendBtn"),
-  aiStatus:        get("aiStatus"),
+  chatPanel:       get("chatPanel"),
+  chatClose:       get("chatClose"),
+  chatMessages:    get("chatMessages"),
+  chatInput:       get("chatInput") as HTMLTextAreaElement,
+  chatSendBtn:     get("chatSendBtn"),
+  chatFt:          get("chatFt"),
   // Settings panel
   settingsBtn:     get("settingsBtn"),
   settingsPanel:   get("settingsPanel"),
