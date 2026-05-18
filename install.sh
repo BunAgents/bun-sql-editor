@@ -221,7 +221,14 @@ else
   echo "curl or wget is required"; exit 1
 fi
 
-DOWNLOAD_URL="$(echo "$RELEASE_JSON" | grep -o "\"browser_download_url\": \"[^\"]*${ARTIFACT}\.tar\.gz\"" | head -1 | cut -d'"' -f4)"
+DOWNLOAD_URL="$(echo "$RELEASE_JSON" | grep -o "\"browser_download_url\": \"[^\"]*${ARTIFACT}\.tar\.gz\"" | head -1 | cut -d'"' -f4 || true)"
+USE_TAR=1
+
+# Fall back to plain binary for older releases
+if [ -z "$DOWNLOAD_URL" ]; then
+  DOWNLOAD_URL="$(echo "$RELEASE_JSON" | grep -o "\"browser_download_url\": \"[^\"]*${ARTIFACT}\"" | head -1 | cut -d'"' -f4 || true)"
+  USE_TAR=0
+fi
 
 if [ -z "$DOWNLOAD_URL" ]; then
   echo "Could not find release artifact: $ARTIFACT"
@@ -244,19 +251,28 @@ else
 fi
 
 # ── Download & extract ────────────────────────────────────────────────────────
-TMP_TAR="$(mktemp).tar.gz"
 TMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TMP_TAR" "$TMP_DIR"' EXIT
+trap 'rm -rf "$TMP_DIR"' EXIT
 
-if command -v curl &>/dev/null; then
-  curl -fsSL "$DOWNLOAD_URL" -o "$TMP_TAR"
+if [ "$USE_TAR" = "1" ]; then
+  TMP_TAR="$TMP_DIR/release.tar.gz"
+  if command -v curl &>/dev/null; then
+    curl -fsSL "$DOWNLOAD_URL" -o "$TMP_TAR"
+  else
+    wget -qO "$TMP_TAR" "$DOWNLOAD_URL"
+  fi
+  tar -xzf "$TMP_TAR" -C "$TMP_DIR"
+  BIN_SRC="$TMP_DIR/$BIN_NAME"
 else
-  wget -qO "$TMP_TAR" "$DOWNLOAD_URL"
+  # Legacy plain binary
+  BIN_SRC="$TMP_DIR/$BIN_NAME"
+  if command -v curl &>/dev/null; then
+    curl -fsSL "$DOWNLOAD_URL" -o "$BIN_SRC"
+  else
+    wget -qO "$BIN_SRC" "$DOWNLOAD_URL"
+  fi
 fi
 
-tar -xzf "$TMP_TAR" -C "$TMP_DIR"
-
-BIN_SRC="$TMP_DIR/$BIN_NAME"
 chmod +x "$BIN_SRC"
 
 # ── Remove macOS quarantine ───────────────────────────────────────────────────
@@ -264,16 +280,20 @@ if [ "$OS" = "Darwin" ]; then
   xattr -d com.apple.quarantine "$BIN_SRC" 2>/dev/null || true
 fi
 
-# ── Install binary + public assets ───────────────────────────────────────────
+# ── Install binary (+ public assets if bundled) ───────────────────────────────
 if [ -w "$INSTALL_DIR" ]; then
   mv "$BIN_SRC" "$INSTALL_DIR/$BIN_NAME"
-  rm -rf "$INSTALL_DIR/public"
-  cp -r "$TMP_DIR/public" "$INSTALL_DIR/public"
+  if [ "$USE_TAR" = "1" ] && [ -d "$TMP_DIR/public" ]; then
+    rm -rf "$INSTALL_DIR/public"
+    cp -r "$TMP_DIR/public" "$INSTALL_DIR/public"
+  fi
 else
   echo "Installing to $INSTALL_DIR (requires sudo)..."
   sudo mv "$BIN_SRC" "$INSTALL_DIR/$BIN_NAME"
-  sudo rm -rf "$INSTALL_DIR/public"
-  sudo cp -r "$TMP_DIR/public" "$INSTALL_DIR/public"
+  if [ "$USE_TAR" = "1" ] && [ -d "$TMP_DIR/public" ]; then
+    sudo rm -rf "$INSTALL_DIR/public"
+    sudo cp -r "$TMP_DIR/public" "$INSTALL_DIR/public"
+  fi
 fi
 
 # Warn if install dir is not on PATH
