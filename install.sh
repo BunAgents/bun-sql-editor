@@ -45,15 +45,27 @@ create_macos_app() {
 
   mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 
-  # Launcher script — starts binary then opens browser
+  # Launcher script — starts binary in background, opens browser, exits immediately
+  # stdout/stderr redirected so no terminal window appears
   BIN_PATH_FOR_LAUNCHER="$(command -v "$BIN_NAME" 2>/dev/null || echo "$INSTALL_DIR/$BIN_NAME")"
   cat > "$MACOS_DIR/bun-sql-editor-launcher" <<LAUNCHER
 #!/usr/bin/env bash
-"$BIN_PATH_FOR_LAUNCHER" &
-sleep 1
+LOG_DIR="\$HOME/Library/Logs/BunSQLEditor"
+mkdir -p "\$LOG_DIR"
+nohup "$BIN_PATH_FOR_LAUNCHER" >"\$LOG_DIR/server.log" 2>&1 &
+SERVER_PID=\$!
+# Poll until server is up (max 5s)
+for i in \$(seq 1 10); do
+  sleep 0.5
+  curl -sf http://localhost:1983/ -o /dev/null && break
+done
 open http://localhost:1983
 LAUNCHER
   chmod +x "$MACOS_DIR/bun-sql-editor-launcher"
+
+  # Mark the .app bundle so macOS treats it as a UI-less helper
+  # LSUIElement=true prevents Dock icon; the browser is the UI
+  sed -i '' 's|<key>LSUIElement</key>.*<false/>|<key>LSUIElement</key>\n  <true/>|' "$CONTENTS/Info.plist" 2>/dev/null || true
 
   # Info.plist
   cat > "$CONTENTS/Info.plist" <<'PLIST'
@@ -78,7 +90,7 @@ LAUNCHER
   <key>CFBundleIconFile</key>
   <string>AppIcon</string>
   <key>LSUIElement</key>
-  <false/>
+  <true/>
   <key>NSHighResolutionCapable</key>
   <true/>
 </dict>
@@ -180,8 +192,10 @@ if [ "${1:-}" = "uninstall" ] || [ "${1:-}" = "remove" ]; then
   fi
   if [ -w "$INSTALL_DIR" ]; then
     rm "$BIN_PATH"
+    rm -rf "$INSTALL_DIR/public"
   else
     sudo rm "$BIN_PATH"
+    sudo rm -rf "$INSTALL_DIR/public"
   fi
   echo "✓ Removed: $BIN_PATH"
   exit 0
@@ -207,7 +221,7 @@ else
   echo "curl or wget is required"; exit 1
 fi
 
-DOWNLOAD_URL="$(echo "$RELEASE_JSON" | grep -o "\"browser_download_url\": \"[^\"]*${ARTIFACT}\"" | head -1 | cut -d'"' -f4)"
+DOWNLOAD_URL="$(echo "$RELEASE_JSON" | grep -o "\"browser_download_url\": \"[^\"]*${ARTIFACT}\.tar\.gz\"" | head -1 | cut -d'"' -f4)"
 
 if [ -z "$DOWNLOAD_URL" ]; then
   echo "Could not find release artifact: $ARTIFACT"
@@ -229,29 +243,37 @@ else
   echo "Installing $BIN_NAME $VERSION ($ARTIFACT)..."
 fi
 
-# ── Download ──────────────────────────────────────────────────────────────────
-TMP_FILE="$(mktemp)"
-trap 'rm -f "$TMP_FILE"' EXIT
+# ── Download & extract ────────────────────────────────────────────────────────
+TMP_TAR="$(mktemp).tar.gz"
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_TAR" "$TMP_DIR"' EXIT
 
 if command -v curl &>/dev/null; then
-  curl -fsSL "$DOWNLOAD_URL" -o "$TMP_FILE"
+  curl -fsSL "$DOWNLOAD_URL" -o "$TMP_TAR"
 else
-  wget -qO "$TMP_FILE" "$DOWNLOAD_URL"
+  wget -qO "$TMP_TAR" "$DOWNLOAD_URL"
 fi
 
-chmod +x "$TMP_FILE"
+tar -xzf "$TMP_TAR" -C "$TMP_DIR"
+
+BIN_SRC="$TMP_DIR/$BIN_NAME"
+chmod +x "$BIN_SRC"
 
 # ── Remove macOS quarantine ───────────────────────────────────────────────────
 if [ "$OS" = "Darwin" ]; then
-  xattr -d com.apple.quarantine "$TMP_FILE" 2>/dev/null || true
+  xattr -d com.apple.quarantine "$BIN_SRC" 2>/dev/null || true
 fi
 
-# ── Install binary ────────────────────────────────────────────────────────────
+# ── Install binary + public assets ───────────────────────────────────────────
 if [ -w "$INSTALL_DIR" ]; then
-  mv "$TMP_FILE" "$INSTALL_DIR/$BIN_NAME"
+  mv "$BIN_SRC" "$INSTALL_DIR/$BIN_NAME"
+  rm -rf "$INSTALL_DIR/public"
+  cp -r "$TMP_DIR/public" "$INSTALL_DIR/public"
 else
   echo "Installing to $INSTALL_DIR (requires sudo)..."
-  sudo mv "$TMP_FILE" "$INSTALL_DIR/$BIN_NAME"
+  sudo mv "$BIN_SRC" "$INSTALL_DIR/$BIN_NAME"
+  sudo rm -rf "$INSTALL_DIR/public"
+  sudo cp -r "$TMP_DIR/public" "$INSTALL_DIR/public"
 fi
 
 # Warn if install dir is not on PATH

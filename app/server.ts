@@ -1,9 +1,17 @@
 import pkg from "../package.json";
+import { dirname, join } from "node:path";
 
 if (Bun.argv.includes("--version") || Bun.argv.includes("-v")) {
   console.log(`release-v${pkg.version}`);
   process.exit(0);
 }
+
+// When compiled to a standalone binary, static files live next to the exe.
+// In dev (bun run app/server.ts), they live at ./app/public relative to CWD.
+const IS_COMPILED = process.execPath.includes("bun-sql-editor");
+const PUBLIC_DIR = IS_COMPILED
+  ? join(dirname(process.execPath), "public")
+  : join(process.cwd(), "app/public");
 
 import { runPostgres, schemaPostgres, testPostgres, columnsPostgres, erdPostgres } from "./adapters/postgres";
 import { runMysql, schemaMysql, testMysql, columnsMysql, erdMysql } from "./adapters/mysql";
@@ -173,13 +181,11 @@ const server = Bun.serve({
       }
     }
 
-    // Strip cache-busting query param for static files
-    const rawPath = url.pathname === "/" ? "/index.html" : url.pathname;
-    const pathname = rawPath;
-    const file = Bun.file(`./app/public${pathname}`);
+    // Serve static files from PUBLIC_DIR (next to binary when compiled, ./app/public in dev)
+    const pathname = url.pathname === "/" ? "/index.html" : url.pathname.split("?")[0];
+    const file = Bun.file(join(PUBLIC_DIR, pathname));
 
     if (await file.exists()) {
-      // Inject build version into HTML for cache busting
       if (pathname === "/index.html") {
         let html = await file.text();
         html = html.replace('src="/app.js"', `src="/app.js?v=${BUILD_TIME}"`);
@@ -188,13 +194,10 @@ const server = Bun.serve({
           headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" },
         });
       }
-      // Strip ?v=... from path to serve actual file
-      const filePath = url.pathname === "/" ? "/index.html" : url.pathname.split("?")[0];
-      const actualFile = Bun.file(`./app/public${filePath}`);
-      const noStore = filePath.endsWith(".js") || filePath.endsWith(".css");
-      return new Response(actualFile, {
+      const noStore = pathname.endsWith(".js") || pathname.endsWith(".css");
+      return new Response(file, {
         headers: {
-          "content-type": contentType(filePath),
+          "content-type": contentType(pathname),
           "cache-control": noStore ? "no-store" : "no-cache",
         },
       });
