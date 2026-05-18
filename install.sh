@@ -3,7 +3,13 @@ set -euo pipefail
 
 REPO="BunAgents/bun-sql-editor"
 BIN_NAME="bun-sql-editor"
-INSTALL_DIR="/usr/local/bin"
+
+# Prefer user-local dir (no sudo); fall back to /usr/local/bin
+if [ -d "$HOME/.local/bin" ] || mkdir -p "$HOME/.local/bin" 2>/dev/null; then
+  INSTALL_DIR="$HOME/.local/bin"
+else
+  INSTALL_DIR="/usr/local/bin"
+fi
 
 # ── Detect platform ───────────────────────────────────────────────────────────
 OS="$(uname -s)"
@@ -40,9 +46,10 @@ create_macos_app() {
   mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 
   # Launcher script — starts binary then opens browser
-  cat > "$MACOS_DIR/bun-sql-editor-launcher" <<'LAUNCHER'
+  BIN_PATH_FOR_LAUNCHER="$(command -v "$BIN_NAME" 2>/dev/null || echo "$INSTALL_DIR/$BIN_NAME")"
+  cat > "$MACOS_DIR/bun-sql-editor-launcher" <<LAUNCHER
 #!/usr/bin/env bash
-/usr/local/bin/bun-sql-editor &
+"$BIN_PATH_FOR_LAUNCHER" &
 sleep 1
 open http://localhost:1983
 LAUNCHER
@@ -104,9 +111,10 @@ create_linux_desktop() {
 
   # Launcher script — starts binary then opens browser
   LAUNCHER_PATH="$HOME/.local/share/bun-sql-editor-launcher.sh"
+  BIN_PATH_FOR_LAUNCHER="$(command -v "$BIN_NAME" 2>/dev/null || echo "$INSTALL_DIR/$BIN_NAME")"
   cat > "$LAUNCHER_PATH" <<LAUNCHER
 #!/usr/bin/env bash
-/usr/local/bin/bun-sql-editor &
+"$BIN_PATH_FOR_LAUNCHER" &
 sleep 1
 xdg-open http://localhost:1983
 LAUNCHER
@@ -180,9 +188,11 @@ if [ "${1:-}" = "uninstall" ] || [ "${1:-}" = "remove" ]; then
 fi
 
 # ── Check current version ─────────────────────────────────────────────────────
+# Use a 2-second timeout — old binaries start a server instead of printing version
 CURRENT_VERSION=""
-if command -v "$BIN_NAME" &>/dev/null; then
-  CURRENT_VERSION="$("$BIN_NAME" --version 2>/dev/null || true)"
+EXISTING_BIN="$(command -v "$BIN_NAME" 2>/dev/null || true)"
+if [ -n "$EXISTING_BIN" ]; then
+  CURRENT_VERSION="$(set +e; "$EXISTING_BIN" --version 2>/dev/null & VPID=$!; sleep 2; kill "$VPID" 2>/dev/null; wait "$VPID" 2>/dev/null; set -e)" || true
 fi
 
 # ── Resolve latest release ────────────────────────────────────────────────────
@@ -243,6 +253,13 @@ else
   echo "Installing to $INSTALL_DIR (requires sudo)..."
   sudo mv "$TMP_FILE" "$INSTALL_DIR/$BIN_NAME"
 fi
+
+# Warn if install dir is not on PATH
+case ":$PATH:" in
+  *":$INSTALL_DIR:"*) ;;
+  *) echo "  ⚠ Add $INSTALL_DIR to your PATH:"
+     echo "    echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.zshrc && source ~/.zshrc" ;;
+esac
 
 # ── Create shortcut ───────────────────────────────────────────────────────────
 if [ "$OS" = "Darwin" ]; then
