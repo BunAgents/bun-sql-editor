@@ -38,6 +38,14 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Stamp version from tag into package.json
+        shell: bash
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          VERSION="${REF_NAME#release-v}"
+          bun x --bun json -I -e "this.version='$VERSION'" package.json
+
       - name: Build binary
         run: bun build --compile --target=${{ matrix.target }} app/server.ts --outfile=${{ matrix.artifact }}
 
