@@ -76,10 +76,10 @@ export function activateConn(id: string): void {
 
 // ─── Connection Modal ──────────────────────────────────────
 const MODAL_DEFAULTS: Record<string, { host: string; port: string; user: string; db: string }> = {
-  postgres:   { host: "localhost", port: "5432",  user: "postgres", db: "postgres" },
+  postgres:   { host: "localhost", port: "5432",  user: "postgres", db: "" },
   mysql:      { host: "localhost", port: "3306",  user: "root",     db: "" },
-  mongodb:    { host: "mongodb://localhost:27017", port: "", user: "", db: "test" },
-  clickhouse: { host: "http://localhost:8123",     port: "", user: "default", db: "default" },
+  mongodb:    { host: "mongodb://localhost:27017", port: "", user: "", db: "" },
+  clickhouse: { host: "http://localhost:8123",     port: "", user: "default", db: "" },
 };
 
 let _editingConnId: string | null = null;

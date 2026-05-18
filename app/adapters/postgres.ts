@@ -7,7 +7,7 @@ function makeClient(connection: Record<string, unknown>): Client {
     port: Number(connection.port ?? 5432),
     user: String(connection.user ?? "postgres"),
     password: String(connection.password ?? ""),
-    database: String(connection.database ?? "postgres"),
+    database: String(connection.database ?? "").trim() || "postgres",
     ssl: connection.ssl ? { rejectUnauthorized: false } : undefined,
   });
 }

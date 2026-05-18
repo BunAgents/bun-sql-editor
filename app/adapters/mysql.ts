@@ -2,12 +2,13 @@ import mysql from "mysql2/promise";
 import type { QueryResult, SchemaResult, TestResult, ColumnsResult, ErdResult, FkRelation, ErdTable } from "../types";
 
 function makeConnection(connection: Record<string, unknown>) {
+  const db = String(connection.database ?? "").trim();
   return mysql.createConnection({
     host: String(connection.host ?? "localhost"),
     port: Number(connection.port ?? 3306),
     user: String(connection.user ?? "root"),
     password: String(connection.password ?? ""),
-    database: String(connection.database ?? "mysql"),
+    ...(db ? { database: db } : {}),
     ssl: connection.ssl ? {} : undefined,
     multipleStatements: false,
   });
@@ -56,54 +57,53 @@ export async function schemaMysql(
 ): Promise<SchemaResult> {
   const started = performance.now();
   const conn = await makeConnection(connection);
-  const db = String(connection.database ?? "mysql");
+  const singleDb = String(connection.database ?? "").trim();
+  const schemaFilter = singleDb
+    ? `table_schema = ${conn.escape(singleDb)}`
+    : `table_schema NOT IN ('information_schema','mysql','performance_schema','sys')`;
 
   try {
     const [tables] = await conn.query<mysql.RowDataPacket[]>(`
-      SELECT table_name, table_type
+      SELECT table_schema, table_name, table_type
       FROM information_schema.tables
-      WHERE table_schema = DATABASE()
-      ORDER BY table_type, table_name
+      WHERE ${schemaFilter}
+      ORDER BY table_schema, table_type, table_name
     `);
 
     const [routines] = await conn.query<mysql.RowDataPacket[]>(`
-      SELECT routine_name, routine_type
+      SELECT routine_schema, routine_name
       FROM information_schema.routines
-      WHERE routine_schema = DATABASE()
-      ORDER BY routine_name
+      WHERE ${schemaFilter.replace(/table_schema/g, "routine_schema")}
+      ORDER BY routine_schema, routine_name
     `);
 
     const [triggers] = await conn.query<mysql.RowDataPacket[]>(`
-      SELECT trigger_name
+      SELECT trigger_schema, trigger_name
       FROM information_schema.triggers
-      WHERE trigger_schema = DATABASE()
-      ORDER BY trigger_name
+      WHERE ${schemaFilter.replace(/table_schema/g, "trigger_schema")}
+      ORDER BY trigger_schema, trigger_name
     `);
 
-    const items: SchemaResult["items"] = [{ name: db, type: "schema" }];
+    const items: SchemaResult["items"] = [];
+    const schemas = new Set<string>();
+    const ensureSchema = (s: string) => {
+      if (!schemas.has(s)) { items.push({ name: s, type: "schema" }); schemas.add(s); }
+    };
 
     for (const row of tables) {
-      items.push({
-        name: String(row.table_name),
-        type: row.table_type === "VIEW" ? "view" : "table",
-        parent: db,
-      });
+      const schema = String(row.table_schema);
+      ensureSchema(schema);
+      items.push({ name: String(row.table_name), type: row.table_type === "VIEW" ? "view" : "table", parent: schema });
     }
-
     for (const row of routines) {
-      items.push({
-        name: String(row.routine_name),
-        type: "function",
-        parent: db,
-      });
+      const schema = String(row.routine_schema);
+      ensureSchema(schema);
+      items.push({ name: String(row.routine_name), type: "function", parent: schema });
     }
-
     for (const row of triggers) {
-      items.push({
-        name: String(row.trigger_name),
-        type: "trigger",
-        parent: db,
-      });
+      const schema = String(row.trigger_schema);
+      ensureSchema(schema);
+      items.push({ name: String(row.trigger_name), type: "trigger", parent: schema });
     }
 
     return { items, elapsedMs: performance.now() - started };
@@ -151,7 +151,7 @@ export async function erdMysql(
 ): Promise<ErdResult> {
   const started = performance.now();
   const conn = await makeConnection(connection);
-  const db = schema || String(connection.database ?? "mysql");
+  const db = schema || String(connection.database ?? "").trim();
 
   try {
     const [colRows] = await conn.query<mysql.RowDataPacket[]>(`

@@ -7,7 +7,7 @@ function makeClient(connection: Record<string, unknown>) {
     host: host.startsWith("http") ? host : `http://${host}`,
     username: String(connection.user ?? "default"),
     password: String(connection.password ?? ""),
-    database: String(connection.database ?? "default"),
+    database: String(connection.database ?? "").trim() || "default",
   });
 }
 
