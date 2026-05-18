@@ -15,6 +15,8 @@ import { openDdlModal, closeDdlModal, initDdlModal } from "./ui/ddl";
 import { initContextMenu } from "./ui/contextmenu";
 import { lockScreen, initLock } from "./ui/lock";
 import { acHide, acSelect, acApply, acTrigger } from "./ui/autocomplete";
+import { initSettings, openSettings } from "./ui/settings";
+import { initAiAssistant } from "./ui/ai-assistant";
 
 // ─── Boot ────────────────────────────────────────────────────
 const { theme } = loadPersistedState();
@@ -30,6 +32,8 @@ initResize();
 initDdlModal();
 initContextMenu();
 initLock();
+initSettings();
+initAiAssistant();
 setStatus("idle", "Ready");
 if (S.activeConnId) loadSchema();
 
@@ -154,6 +158,9 @@ el.editor.addEventListener("keydown", e => {
   if (e.key === ".") setTimeout(acTrigger, 0);
 });
 el.editor.addEventListener("blur", () => setTimeout(acHide, 120));
+
+// ─── Settings ────────────────────────────────────────────────
+el.settingsBtn.addEventListener("click", openSettings);
 
 // ─── Global keyboard shortcuts ───────────────────────────────
 document.addEventListener("keydown", e => {

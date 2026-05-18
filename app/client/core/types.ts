@@ -129,3 +129,20 @@ export type QueryMeta = {
   schema: string | null;
   table: string;
 };
+
+export type AiProvider =
+  | "openai"
+  | "anthropic"
+  | "ollama"
+  | "openrouter"
+  | "fastrouter"
+  | "custom";
+
+export type AiConfig = {
+  provider: AiProvider;
+  apiKey: string;
+  model: string;
+  baseUrl: string;
+  maxTokens: number;
+  enabled: boolean;
+};
