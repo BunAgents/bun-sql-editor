@@ -332,6 +332,10 @@ body {
   border-color: var(--brand);
   box-shadow: 0 0 0 2px var(--brand-glow);
 }
+.chat-textarea:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 
 .chat-ft-row {
   display: flex;

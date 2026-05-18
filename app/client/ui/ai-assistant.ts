@@ -130,27 +130,22 @@ function makePlaceholder(iconOpacity: string, text: string): HTMLElement {
 }
 
 function renderChatState(): void {
-  const messages = getEl<HTMLElement>("chatMessages");
-  const ft = getEl<HTMLElement>("chatFt");
+  const messages  = getEl<HTMLElement>("chatMessages");
+  const input     = getEl<HTMLTextAreaElement>("chatInput");
+  const sendBtn   = getEl<HTMLElement>("chatSendBtn");
+  const configured = isConfigured();
 
-  if (!isConfigured()) {
+  input.disabled  = !configured;
+  sendBtn.toggleAttribute("disabled", !configured);
+  input.placeholder = configured
+    ? "Ask a question or describe a query to generate SQL…"
+    : "Configure an API key in Settings to start chatting.";
+
+  if (!configured) {
     messages.replaceChildren();
 
     const wrap = document.createElement("div");
     wrap.className = "chat-unconfigured";
-
-    const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    icon.setAttribute("width", "32"); icon.setAttribute("height", "32");
-    icon.setAttribute("viewBox", "0 0 24 24"); icon.setAttribute("fill", "none");
-    icon.setAttribute("stroke", "currentColor"); icon.setAttribute("stroke-width", "1.5");
-    icon.setAttribute("aria-hidden", "true");
-    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    circle.setAttribute("cx", "12"); circle.setAttribute("cy", "12"); circle.setAttribute("r", "10");
-    const l1 = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    l1.setAttribute("x1", "12"); l1.setAttribute("y1", "8"); l1.setAttribute("x2", "12"); l1.setAttribute("y2", "12");
-    const l2 = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    l2.setAttribute("x1", "12"); l2.setAttribute("y1", "16"); l2.setAttribute("x2", "12.01"); l2.setAttribute("y2", "16");
-    icon.append(circle, l1, l2);
 
     const title = document.createElement("p");
     title.className = "chat-unconfigured-title";
@@ -165,13 +160,11 @@ function renderChatState(): void {
     btn.textContent = "Open Settings";
     btn.addEventListener("click", openSettings);
 
-    wrap.append(icon, title, sub, btn);
+    wrap.append(title, sub, btn);
     messages.appendChild(wrap);
-    ft.hidden = true;
     return;
   }
 
-  ft.hidden = false;
   if (!history.length) {
     messages.replaceChildren(makePlaceholder("0.3", "Ask a question or describe a query to generate SQL."));
   }
