@@ -36,7 +36,7 @@ function New-Shortcut {
 Set oShell = CreateObject("WScript.Shell")
 oShell.Run """$BinPath""", 0, False
 WScript.Sleep 1000
-oShell.Run "http://localhost:3000"
+oShell.Run "http://localhost:1983"
 "@ | Set-Content $LauncherPath
 
     # Desktop shortcut
@@ -151,4 +151,4 @@ if ($CurrentVersion) {
 }
 Write-Host ""
 Write-Host "Run:  bun-sql-editor   or double-click the Desktop shortcut"
-Write-Host "Then open http://localhost:3000"
+Write-Host "Then open http://localhost:1983"

@@ -24,7 +24,7 @@ Downloads the latest binary, clears the SmartScreen flag, installs to `%LOCALAPP
 bun-sql-editor
 ```
 
-Open **http://localhost:3000** in your browser.
+Open **http://localhost:1983** in your browser.
 
 ```bash
 # Custom port
@@ -61,7 +61,7 @@ Requires [Bun](https://bun.sh).
 git clone https://github.com/BunAgents/bun-sql-editor
 cd bun-sql-editor
 bun install
-bun run dev              # → http://localhost:3000 with hot reload
+bun run dev              # → http://localhost:1983 with hot reload
 bun run build:client     # bundle TypeScript client → app/public/app.js
 bun run build            # type check + bundle
 bun test                 # 32 unit tests, no DB required

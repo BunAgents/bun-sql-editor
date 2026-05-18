@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const BASE = "http://localhost:3000";
+const BASE = "http://localhost:1983";
 
 test.describe("App shell", () => {
   test("loads the page and shows the editor", async ({ page }) => {

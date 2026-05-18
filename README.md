@@ -40,7 +40,7 @@ The script detects your platform, downloads the right binary, removes the macOS 
 bun-sql-editor
 ```
 
-Open **http://localhost:3000** in your browser.
+Open **http://localhost:1983** in your browser.
 
 **Custom port:**
 
@@ -70,7 +70,7 @@ Installs to `%LOCALAPPDATA%\bun-sql-editor` and adds it to your user `PATH`. Run
 ## How It Works
 
 ```
-Browser (localhost:3000) → Local binary → Your database
+Browser (localhost:1983) → Local binary → Your database
 ```
 
 The binary starts a small HTTP server on your machine. Your browser connects to `localhost`. The binary acts as a proxy between browser and database. Credentials go to `localhost` only — never to any external server.
@@ -115,7 +115,7 @@ Requires [Bun](https://bun.sh):
 git clone https://github.com/BunAgents/bun-sql-editor
 cd bun-sql-editor
 bun install
-bun run dev              # development with hot reload → http://localhost:3000
+bun run dev              # development with hot reload → http://localhost:1983
 bun run build:client     # bundle TypeScript client → app/public/app.js
 bun run build            # type check + bundle
 bun test                 # run unit tests (32 tests, no DB required)

@@ -3,7 +3,7 @@
 ## Overview
 
 ```
-Browser (localhost:3000) → Bun HTTP server → Your database
+Browser (localhost:1983) → Bun HTTP server → Your database
 ```
 
 The binary runs a local HTTP server. The browser loads a single-page app (`app.js`) that communicates with the server via JSON API calls. Credentials go to `localhost` only — never to any external server.

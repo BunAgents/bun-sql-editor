@@ -44,7 +44,7 @@ create_macos_app() {
 #!/usr/bin/env bash
 /usr/local/bin/bun-sql-editor &
 sleep 1
-open http://localhost:3000
+open http://localhost:1983
 LAUNCHER
   chmod +x "$MACOS_DIR/bun-sql-editor-launcher"
 
@@ -108,7 +108,7 @@ create_linux_desktop() {
 #!/usr/bin/env bash
 /usr/local/bin/bun-sql-editor &
 sleep 1
-xdg-open http://localhost:3000
+xdg-open http://localhost:1983
 LAUNCHER
   chmod +x "$LAUNCHER_PATH"
 
@@ -259,4 +259,4 @@ else
 fi
 echo ""
 echo "Run:  $BIN_NAME"
-echo "Then open http://localhost:3000"
+echo "Then open http://localhost:1983"

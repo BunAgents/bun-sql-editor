@@ -85,11 +85,11 @@
       },
       {
         "type": "p",
-        "content": "Bun SQL Editor is a small HTTP server that runs on your machine. Your browser connects to <code>localhost:3000</code>. The server connects to your database. Credentials go to <code>localhost</code> — never to any external server."
+        "content": "Bun SQL Editor is a small HTTP server that runs on your machine. Your browser connects to <code>localhost:1983</code>. The server connects to your database. Credentials go to <code>localhost</code> — never to any external server."
       },
       {
         "type": "pre",
-        "content": "Browser → localhost:3000 (your machine) → Database"
+        "content": "Browser → localhost:1983 (your machine) → Database"
       },
       {
         "type": "p",
@@ -370,7 +370,7 @@
       },
       {
         "type": "pre",
-        "content": "PWA (browser) ←→ localhost:3000 (binary) ←→ Database"
+        "content": "PWA (browser) ←→ localhost:1983 (binary) ←→ Database"
       },
       {
         "type": "ul",

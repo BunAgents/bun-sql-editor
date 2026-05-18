@@ -6,7 +6,7 @@
 git clone https://github.com/BunAgents/bun-sql-editor
 cd bun-sql-editor
 bun install
-bun run dev   # → http://localhost:3000 with hot reload
+bun run dev   # → http://localhost:1983 with hot reload
 ```
 
 ## Project Structure

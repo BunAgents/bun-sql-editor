@@ -6,7 +6,7 @@ export default defineConfig({
   retries: 1,
   reporter: "list",
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: "http://localhost:1983",
     trace: "on-first-retry",
   },
   projects: [
@@ -15,7 +15,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "bun run app/server.ts",
-    url: "http://localhost:3000",
+    url: "http://localhost:1983",
     reuseExistingServer: !process.env.CI,
     timeout: 10_000,
   },

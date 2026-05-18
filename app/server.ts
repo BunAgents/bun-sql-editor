@@ -104,7 +104,7 @@ async function erdRouter(body: ErdRequest) {
 const BUILD_TIME = Date.now().toString(36);
 
 const server = Bun.serve({
-  port: Number(process.env.PORT ?? 3000),
+  port: Number(process.env.PORT ?? 1983),
   async fetch(req) {
     const url = new URL(req.url);
 
