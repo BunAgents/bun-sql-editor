@@ -1,5 +1,5 @@
 import { S } from "../data/state";
-import { getAiConfig } from "./settings";
+import { getAiConfig, openSettings } from "./settings";
 import type { AiConfig } from "../core/types";
 
 function getEl<T extends HTMLElement>(id: string) {
@@ -104,8 +104,8 @@ async function callAnthropic(cfg: AiConfig, systemPrompt: string, userPrompt: st
 
 async function generateSql(prompt: string, dbType: string): Promise<string> {
   const cfg = getAiConfig();
-  if (!cfg.enabled) throw new Error("AI is disabled — enable it in Settings first.");
-  if (!cfg.apiKey && cfg.provider !== "ollama") throw new Error("API key is not set. Configure it in Settings.");
+  if (!cfg.enabled) { openSettings(); throw new Error("Enable AI in Settings first."); }
+  if (!cfg.apiKey && cfg.provider !== "ollama") { openSettings(); throw new Error("Enter your API key in Settings."); }
 
   const systemPrompt = buildSystemPrompt(dbType);
 

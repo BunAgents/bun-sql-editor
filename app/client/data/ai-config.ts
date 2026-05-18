@@ -8,7 +8,7 @@ const DEFAULTS: AiConfig = {
   model: "gpt-4o",
   baseUrl: "",
   maxTokens: 2048,
-  enabled: false,
+  enabled: true,
 };
 
 export function loadAiConfig(): AiConfig {
