@@ -46,6 +46,9 @@ jobs:
           VERSION="${REF_NAME#release-v}"
           bun x --bun json -I -e "this.version='$VERSION'" package.json
 
+      - name: Build client
+        run: bun run build:client
+
       - name: Build binary
         run: bun build --compile --target=${{ matrix.target }} app/server.ts --outfile=${{ matrix.artifact }}
 

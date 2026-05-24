@@ -62,3 +62,11 @@ export async function apiErd(connId: string, type: string, conn: Record<string, 
   });
   return res.json() as Promise<Record<string, unknown>>;
 }
+
+export async function apiServerStop(): Promise<void> {
+  await fetch("/api/server/stop", { method: "POST" }).catch(() => {});
+}
+
+export async function apiServerRestart(): Promise<void> {
+  await fetch("/api/server/restart", { method: "POST" }).catch(() => {});
+}

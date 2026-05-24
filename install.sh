@@ -45,25 +45,27 @@ create_macos_app() {
 
   mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 
-  # Launcher script — starts binary in background, opens browser, exits immediately
-  # stdout/stderr redirected so no terminal window appears
-  BIN_PATH_FOR_LAUNCHER="$(command -v "$BIN_NAME" 2>/dev/null || echo "$INSTALL_DIR/$BIN_NAME")"
+  # Launcher: opens Terminal.app showing startup progress, then browser
+  # Always use the canonical install path so the launcher isn't broken by PATH order
+  BIN_PATH_FOR_LAUNCHER="$INSTALL_DIR/$BIN_NAME"
   cat > "$MACOS_DIR/bun-sql-editor-launcher" <<LAUNCHER
 #!/usr/bin/env bash
-LOG_DIR="\$HOME/Library/Logs/BunSQLEditor"
-mkdir -p "\$LOG_DIR"
-nohup "$BIN_PATH_FOR_LAUNCHER" >"\$LOG_DIR/server.log" 2>&1 &
-SERVER_PID=\$!
-# Poll until server is up (max 5s)
-for i in \$(seq 1 10); do
-  sleep 0.5
-  curl -sf http://localhost:1983/ -o /dev/null && break
-done
-open http://localhost:1983
+# If server already running, just open browser
+if curl -sf http://localhost:1983/ -o /dev/null 2>/dev/null; then
+  open http://localhost:1983
+  exit 0
+fi
+# Write a .command file — macOS opens these in Terminal.app automatically, no AppleScript needed
+TMPSCRIPT="\$(mktemp /tmp/bsql-run-XXXXXX.command)"
+printf '#!/usr/bin/env bash\nclear\n%s\n' "$BIN_PATH_FOR_LAUNCHER" > "\$TMPSCRIPT"
+chmod +x "\$TMPSCRIPT"
+open "\$TMPSCRIPT"
+(sleep 10 && rm -f "\$TMPSCRIPT") &
 LAUNCHER
   chmod +x "$MACOS_DIR/bun-sql-editor-launcher"
 
-  # Mark the .app bundle so macOS treats it as a UI-less helper
+  # LSUIElement=false so the app shows in Dock while Terminal is open is fine,
+  # but we keep it true so double-clicking doesn't create a blank dock icon
   # LSUIElement=true prevents Dock icon; the browser is the UI
   sed -i '' 's|<key>LSUIElement</key>.*<false/>|<key>LSUIElement</key>\n  <true/>|' "$CONTENTS/Info.plist" 2>/dev/null || true
 
@@ -97,19 +99,32 @@ LAUNCHER
 </plist>
 PLIST
 
-  # Fetch and convert SVG icon → icns (best-effort, skip if tools missing)
-  if command -v rsvg-convert &>/dev/null && command -v iconutil &>/dev/null; then
-    ICONSET="$RESOURCES_DIR/AppIcon.iconset"
-    mkdir -p "$ICONSET"
+  # Generate icon → icns (best-effort, macOS only needs qlmanage + sips + iconutil)
+  if command -v iconutil &>/dev/null && command -v sips &>/dev/null; then
+    ICONSET="$(mktemp -d /tmp/bsql-iconset-XXXXXX)"
     SVG_URL="https://raw.githubusercontent.com/$REPO/main/landing/logo.svg"
     TMP_SVG="$(mktemp /tmp/bsql-icon-XXXXXX.svg)"
+    TMP_PNG="$(mktemp /tmp/bsql-icon-XXXXXX).png"
     curl -fsSL "$SVG_URL" -o "$TMP_SVG" 2>/dev/null || true
-    for SIZE in 16 32 64 128 256 512; do
-      rsvg-convert -w $SIZE -h $SIZE "$TMP_SVG" -o "$ICONSET/icon_${SIZE}x${SIZE}.png" 2>/dev/null || true
-      rsvg-convert -w $((SIZE*2)) -h $((SIZE*2)) "$TMP_SVG" -o "$ICONSET/icon_${SIZE}x${SIZE}@2x.png" 2>/dev/null || true
-    done
-    iconutil -c icns "$ICONSET" -o "$RESOURCES_DIR/AppIcon.icns" 2>/dev/null || true
-    rm -rf "$ICONSET" "$TMP_SVG"
+    # Render SVG → PNG via qlmanage (built-in macOS) or rsvg-convert
+    if command -v qlmanage &>/dev/null; then
+      TMP_QL_DIR="$(mktemp -d /tmp/bsql-ql-XXXXXX)"
+      qlmanage -t -s 512 -o "$TMP_QL_DIR" "$TMP_SVG" 2>/dev/null || true
+      RENDERED="$(ls "$TMP_QL_DIR"/*.png 2>/dev/null | head -1)"
+      [ -n "$RENDERED" ] && cp "$RENDERED" "$TMP_PNG"
+      rm -rf "$TMP_QL_DIR"
+    elif command -v rsvg-convert &>/dev/null; then
+      rsvg-convert -w 512 -h 512 "$TMP_SVG" -o "$TMP_PNG" 2>/dev/null || true
+    fi
+    if [ -f "$TMP_PNG" ]; then
+      mkdir -p "$ICONSET"
+      for SIZE in 16 32 64 128 256 512; do
+        sips -z $SIZE $SIZE "$TMP_PNG" --out "$ICONSET/icon_${SIZE}x${SIZE}.png" 2>/dev/null || true
+        sips -z $((SIZE*2)) $((SIZE*2)) "$TMP_PNG" --out "$ICONSET/icon_${SIZE}x${SIZE}@2x.png" 2>/dev/null || true
+      done
+      iconutil -c icns "$ICONSET" -o "$RESOURCES_DIR/AppIcon.icns" 2>/dev/null || true
+    fi
+    rm -rf "$ICONSET" "$TMP_SVG" "$TMP_PNG"
   fi
 
   echo "✓ Created: $APP_DIR"
@@ -123,7 +138,7 @@ create_linux_desktop() {
 
   # Launcher script — starts binary then opens browser
   LAUNCHER_PATH="$HOME/.local/share/bun-sql-editor-launcher.sh"
-  BIN_PATH_FOR_LAUNCHER="$(command -v "$BIN_NAME" 2>/dev/null || echo "$INSTALL_DIR/$BIN_NAME")"
+  BIN_PATH_FOR_LAUNCHER="$INSTALL_DIR/$BIN_NAME"
   cat > "$LAUNCHER_PATH" <<LAUNCHER
 #!/usr/bin/env bash
 "$BIN_PATH_FOR_LAUNCHER" &
@@ -206,7 +221,12 @@ fi
 CURRENT_VERSION=""
 EXISTING_BIN="$(command -v "$BIN_NAME" 2>/dev/null || true)"
 if [ -n "$EXISTING_BIN" ]; then
-  CURRENT_VERSION="$(set +e; "$EXISTING_BIN" --version 2>/dev/null & VPID=$!; sleep 2; kill "$VPID" 2>/dev/null; wait "$VPID" 2>/dev/null; set -e)" || true
+  RAW_VERSION="$(set +e; "$EXISTING_BIN" --version 2>/dev/null & VPID=$!; sleep 2; kill "$VPID" 2>/dev/null; wait "$VPID" 2>/dev/null; set -e)" || true
+  # Only treat it as a version if it looks like a tag (old binaries print server startup lines)
+  FIRST_LINE="$(echo "$RAW_VERSION" | head -1)"
+  case "$FIRST_LINE" in
+    v[0-9]*|release-v[0-9]*) CURRENT_VERSION="$FIRST_LINE" ;;
+  esac
 fi
 
 # ── Resolve latest release ────────────────────────────────────────────────────

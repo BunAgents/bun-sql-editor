@@ -17,6 +17,7 @@ import { lockScreen, initLock } from "./ui/lock";
 import { acHide, acSelect, acApply, acTrigger } from "./ui/autocomplete";
 import { initSettings, openSettings } from "./ui/settings";
 import { initAiAssistant } from "./ui/ai-assistant";
+import { initServerMenu } from "./ui/server-menu";
 
 // ─── Boot ────────────────────────────────────────────────────
 const { theme } = loadPersistedState();
@@ -34,6 +35,7 @@ initContextMenu();
 initLock();
 initSettings();
 initAiAssistant();
+initServerMenu();
 setStatus("idle", "Ready");
 if (S.activeConnId) loadSchema();
 

@@ -813,7 +813,84 @@ body {
   padding: 8px 10px;
   border-top: 1px solid var(--border);
   flex-shrink: 0;
+  position: relative;
 }
+
+/* ─── Server power button ────────────────────────────────── */
+.server-menu-wrap {
+  position: relative;
+}
+.server-power-btn {
+  position: relative;
+}
+.server-dot {
+  position: absolute;
+  top: 3px; right: 3px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 4px var(--green);
+  transition: background 0.3s;
+}
+.server-dot.off {
+  background: var(--red);
+  box-shadow: 0 0 4px var(--red);
+}
+.server-dot.busy {
+  background: var(--yellow);
+  box-shadow: 0 0 4px var(--yellow);
+}
+.server-popover {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  min-width: 150px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.45);
+  padding: 4px;
+  z-index: 200;
+}
+.server-popover[hidden] { display: none; }
+.server-popover-hd {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-3);
+  padding: 6px 10px 4px;
+}
+.server-popover-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 13px;
+  color: var(--text);
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: left;
+}
+.server-popover-item:hover {
+  background: var(--bg-4);
+}
+.server-popover-item--danger { color: var(--red); }
+.server-popover-item--danger:hover { background: var(--red-bg); }
+.server-popover-item:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+.server-popover-status {
+  font-size: 11px;
+  color: var(--text-3);
+  padding: 4px 10px 6px;
+  min-height: 0;
+}
+.server-popover-status:empty { display: none; }
 
 /* Theme icon visibility */
 .theme-icon-light { display: none; }
@@ -2553,6 +2630,13 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-2);
+  margin-bottom: 0.25rem;
+}
+.settings-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 .settings-section-hd {
   font-size: 11px;

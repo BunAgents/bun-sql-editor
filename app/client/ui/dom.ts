@@ -127,4 +127,11 @@ export const el = {
   sAiSaveStatus:   get("sAiSaveStatus"),
   sAiKeyField:     get("sAiKeyField"),
   sAiBaseUrlField: get("sAiBaseUrlField"),
+  // Server power menu
+  serverPowerBtn:  get("serverPowerBtn") as HTMLButtonElement,
+  serverPopover:   get("serverPopover"),
+  serverDot:       get("serverDot"),
+  popRestartBtn:   get("popRestartBtn") as HTMLButtonElement,
+  popStopBtn:      get("popStopBtn") as HTMLButtonElement,
+  serverPopStatus: get("serverPopStatus"),
 };
