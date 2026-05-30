@@ -1,4 +1,4 @@
-name = "bun-sql-editor-landing"
+name = "bun-sql-editor"
 pages_build_output_dir = "landing"
 compatibility_date = "2024-01-01"
 
