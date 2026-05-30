@@ -44,7 +44,7 @@ jobs:
           REF_NAME: ${{ github.ref_name }}
         run: |
           VERSION="${REF_NAME#release-v}"
-          bun x --bun json -I -e "this.version='$VERSION'" package.json
+          bun x --bun json -I -f package.json -e "this.version='$VERSION'"
 
       - name: Build client
         run: bun run build:client
